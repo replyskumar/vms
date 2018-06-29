@@ -60,16 +60,7 @@ WSGI_APPLICATION = 'vms.wsgi.application'
 DATABASES = {
 }
 
-TESTING = not(len(sys.argv) > 1 and sys.argv[1] != 'test')
-
-if TESTING:
-    default_db_url = 'mysql://root:@localhost:3306/vms'
-else:
-    default_db_url = 'mysql://root:toor@localhost:3306/vms'
-
-DATABASES['default'] = dj_database_url.config(default=default_db_url)
-
-
+DATABASES['default'] = dj_database_url.config(default='mysql://root:toor@localhost:3306/vms')
 
 AUTH_PASSWORD_VALIDATORS = [
     {

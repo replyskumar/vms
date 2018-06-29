@@ -1,4 +1,6 @@
 language: python
+env:
+- DATABASE_URL='mysql://root:@localhost:3306/vms"
 python:
 - '3.6'
 services:
