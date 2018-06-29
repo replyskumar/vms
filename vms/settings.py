@@ -1,5 +1,6 @@
 import os
 import dj_database_url
+import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -106,3 +107,5 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 USE_ELASTIC_SEARCH = os.environ.get('USE_ELASTIC_SEARCH','False') == 'True'
 ELASTIC_SEARCH_URL = os.environ.get('ELASTICSEARCH_URL',"http://localhost:9200")
+
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
