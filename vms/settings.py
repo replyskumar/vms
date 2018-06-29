@@ -7,7 +7,7 @@ SECRET_KEY = 'p720a@cagjnn-)%%tbi+&thrh$+6&uy@h_+rm2(n98v@c_ev+v'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost","127.0.0.1","http://vms-techm.herokuapp.com/"]
+ALLOWED_HOSTS = ["localhost","127.0.0.1","vms-techm.herokuapp.com"]
 
 
 INSTALLED_APPS = [
@@ -104,5 +104,5 @@ LOGIN_URL = '/accounts/login'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
-USE_ELASTIC_SEARCH = True
+USE_ELASTIC_SEARCH = False
 ELASTIC_SEARCH_URL = os.environ.get('BONSAI_URL',"http://localhost:9200")
