@@ -7,8 +7,9 @@ from products.models import server,product
 from django.db.models import F
 from django.http import JsonResponse,HttpResponse
 from .tasks import add_cpe_from_csv,add_rpm_from_file,add_rpm
-from cve.tasks import add_vulns
+from cve.tasks import add_vuln,vulns_added_notif
 from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
+from celery import chain
 
 @login_required
 def index(request):
@@ -36,7 +37,7 @@ def add_cpe(request):
             elif r[0] ==-2:
                 return JsonResponse({"message": "Unknown error occured","type":"danger"})
             else:
-                add_vulns.delay([[request.POST['cpe'],int(request.POST['server'])]],request.user.id)
+                chain(add_vuln.si([request.POST['cpe'],int(request.POST['server'])]),vulns_added_notif.si(1,request.user.id))()
                 return JsonResponse({"message": "Component added successfully!","type":"success"})
         else:
             r = add_rpm(request.POST['cpe'],int(request.POST['server']),request.user)
@@ -47,6 +48,7 @@ def add_cpe(request):
             elif r[3] == "Unknown error occured":
                 return JsonResponse({"message": r[3],"type":"danger"})
             elif r[3] == "Added to DB":
+                chain(add_vuln.si([r[1],int(request.POST['server'])]),vulns_added_notif.si(1,request.user.id))()
                 return JsonResponse({"message": "Component added successfully!","type":"success"})
             elif r[3] == "Multiple matches found":
                 return JsonResponse({"message": r[3],"type":"warning"})
