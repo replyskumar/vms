@@ -1,0 +1,110 @@
+{% extends 'main/base.html' %}
+{% block color %}blue{% endblock color %}
+{% block title %}
+VMS - Notifications
+{% endblock title %}
+{% block heading %}
+Notifications
+{% endblock heading %}
+{% block content %}
+<div id="container-fluid">
+  <div class="row">
+      <div class="col-lg-12 col-md-12">
+          <div class="card card-nav-tabs">
+              <div class="card-header" data-background-color="blue">
+                  <div class="nav-tabs-navigation">
+                      <div class="nav-tabs-wrapper">
+                          <span class="nav-tabs-title">Notifications:</span>
+                          <ul class="nav nav-tabs" data-tabs="tabs">
+                              <li class="active">
+                                  <a href="#unread" data-toggle="tab">
+                                      <i class="material-icons">mail</i>Unread
+                                      <div class="ripple-container"></div>
+                                  </a>
+                              </li>
+                              <li class="">
+                                  <a href="#read" data-toggle="tab">
+                                      <i class="material-icons">inbox</i> All Notifications
+                                      <div class="ripple-container"></div>
+                                  </a>
+                              </li>
+                              <button id="clear-notif" type="button" rel="tooltip" title="Clear All Notifications" class="btn btn-danger btn-simple btn-xs pull-right">
+                                <i class="material-icons">close</i>
+                              </button>
+                          </ul>
+                      </div>
+                  </div>
+              </div>
+              <div class="card-content">
+                  <div class="tab-content">
+                      <div class="tab-pane active" id="unread">
+                          <table class="table">
+                              <tbody>
+                                {% if unread %}
+                                {% for i in unread %}
+                                <tr>
+                                  <td>{{i.message}}</td>
+                                  <td class="text-right">
+                                  </td>
+                                </tr>
+                                {% endfor %}.
+                                {% else %}
+                                <tr>
+                                  <td>No new notifications</td>
+                                  <td class="text-right">
+                                  </td>
+                                </tr>
+                                {% endif %}
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="tab-pane" id="read">
+                          <table class="table">
+                              <tbody>
+                                {% if read %}
+                                {% for i in read %}
+                                <tr>
+                                  <td>{{i.message}}</td>
+                                  <td class="text-right">
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                  <td>No notifications</td>
+                                  <td class="text-right">
+                                  </td>
+                                </tr>
+                                {% endif %}
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+<form action="" method="POST" id="notif-form-clear">
+  {% csrf_token %}
+  <input type="hidden" name="clear">
+</form>
+{% endblock content%}
+{% block javascript %}
+<script>
+  $("#nav-notifications").addClass("active");
+  $("#clear-notif").on("click",function(){
+    $.ajax({
+      url : '{% url "notifications:clear" %}',
+      type: "POST",
+      data: $("#notif-form-clear").serialize(),
+      success: function (data) {
+        location.reload();
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+      }
+    });
+  });
+</script>
+{% endblock javascript %}

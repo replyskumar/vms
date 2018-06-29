@@ -1,0 +1,12 @@
+{% if notifs %}
+{% for i in notifs %}
+<li>
+    <a href="{% url 'notifications:index' %}">{{i.header}}</a>
+</li>
+{% endfor %}
+{% else %}
+<li>
+  <a href="{% url 'notifications:index' %}">No new notifications</a>
+</li>
+{% endif %}
+<input type="hidden" value={{count}} id="notif-count">
