@@ -60,7 +60,14 @@ WSGI_APPLICATION = 'vms.wsgi.application'
 DATABASES = {
 }
 
-DATABASES['default'] = dj_database_url.config(default='mysql://root:toor@localhost:3306/vms')
+TESTING = not(len(sys.argv) > 1 and sys.argv[1] != 'test')
+
+if TESTING:
+    default_db_url = 'mysql://root:@localhost:3306/vms'
+else:
+    default_db_url = 'mysql://root:toor@localhost:3306/vms'
+
+DATABASES['default'] = dj_database_url.config(default=default_db_url)
 
 
 
@@ -107,5 +114,3 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 USE_ELASTIC_SEARCH = os.environ.get('USE_ELASTIC_SEARCH','False') == 'True'
 ELASTIC_SEARCH_URL = os.environ.get('ELASTICSEARCH_URL',"http://localhost:9200")
-
-TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'

@@ -1,9 +1,13 @@
 language: python
 python:
 - '3.6'
+services:
+- mysql
 install:
 - pip install -q -r requirements.txt
 before_script:
+- mysql -u root -e 'CREATE DATABASE vms;'
+- python manage.py makemigrations --noinput
 - python manage.py migrate --noinput
 - python manage.py collectstatic --noinput
 script:
