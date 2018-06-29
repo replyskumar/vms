@@ -1,0 +1,71 @@
+{% extends 'main/base.html' %}
+{% block color %}purple{% endblock color %}
+{% block title %}
+VMS - Servers
+{% endblock title %}
+{% block css %}
+<link href="/static/main/css/dataTables.material.min.css" rel="stylesheet" />
+<link href="/static/main/css/material.min.css" rel="stylesheet" />
+{% endblock css %}
+{% block heading %}
+CSV Upload
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header" data-background-color="purple">
+          <h4 class="title">Servers</h4>
+          <p class="category">Upload results</p>
+        </div>
+        <div class="card-content">
+          <table id="data-table" class="mdl-data-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Server Name</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for i in results %}
+              <tr>
+                {% for j in i %}
+                <td {% if j == 'Server with same name exists' %}style="color: red;"{% elif j == 'Product not found' %}style="color: red;"{% elif j == 'Server with same name exists' %}style="color: purple;"{% elif j == 'Added to DB' %}style="color: #358c17"{% endif %}>{{j}}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<form id="dropdown-form">
+  {% csrf_token %}
+  <input type='hidden' id="sel-pro" name='product'/>
+</form>
+{% endblock content%}
+{% block javascript %}
+<script src='/static/main/js/jquery.dataTables.min.js'></script>
+<script src='/static/main/js/dataTables.material.min.js'></script>
+<script src='/static/main/js/ellipsis.js'></script>
+<script type="text/javascript">
+$("#nav-servers").addClass("active");
+$(document).ready(function () {
+  tableOptions = {
+    "scrollY":        "400px",
+    "scrollCollapse": true,
+    "paging": false,
+    "order": [[ 2, 'desc' ], [ 0, 'asc' ], [ 1, 'asc' ]],
+    columnDefs: [
+      {targets: '_all', className: 'mdl-data-table__cell--non-numeric'},
+    ]
+  };
+  $('#data-table').DataTable(tableOptions);
+
+});
+</script>
+{% endblock javascript %}

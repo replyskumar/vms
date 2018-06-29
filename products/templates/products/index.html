@@ -1,0 +1,150 @@
+{% extends 'main/base.html' %}
+{% block color %}purple{% endblock color %}
+{% block title %}
+VMS - Products
+{% endblock title %}
+{% block css %}
+<link href="/static/main/css/dataTables.material.min.css" rel="stylesheet" />
+<link href="/static/main/css/material.min.css" rel="stylesheet" />
+{% endblock css %}
+{% block heading %}
+Manage Products
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8" id="alerts"></div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+          <div class="card-header" data-background-color="purple">
+              <h4 class="title">Add Product</h4>
+              <p class="category">
+              Enter Product Details
+              </p>
+          </div>
+          <div class="card-content">
+              <form id="add-product" action="" method="POST" class="form">
+                  {% csrf_token %}
+                  <div class="row">
+                      <div class="col-md-12">
+                          <div class="form-group label-floating">
+                              <input name='product' type="text" class="form-control" placeholder="Product Name" id='product'/>
+                          </div>
+                      </div>
+                  </div>
+                  <button id="add-product-button" type="submit" class="btn btn-primary pull-right" id="submit-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add Product</button>
+                  <div class="clearfix"></div>
+              </form>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header" data-background-color="purple">
+          <h4 class="title">Products</h4>
+          <p class="category">View and delete products</p>
+        </div>
+        <div class="card-content">
+          <form id="delete-form" method="POST" action="">
+            {% csrf_token %}
+            <button type="button" class="btn btn-danger pull-left" id="delete-button" data-toggle="modal" data-target="#confirmationModal">Delete</button>
+            <table id="data-table" class="mdl-data-table">
+              <thead>
+                <tr>
+                  <th>Select</th>
+                  <th>ID</th>
+                  <th>Product Name</th>
+                  <th>Number of Servers</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="Are you sure" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    Do you want to delete the selected items?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Go back</button>
+                    <button type="submit" class="btn btn-danger" id="delete-confirm">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<form id="dropdown-form">
+  {% csrf_token %}
+  <input type='hidden' id="sel-pro" name='product'/>
+</form>
+{% endblock content%}
+{% block javascript %}
+<script src='/static/main/js/jquery.dataTables.min.js'></script>
+<script src='/static/main/js/dataTables.material.min.js'></script>
+<script src='/static/main/js/ellipsis.js'></script>
+<script type="text/javascript">
+$("#nav-products").addClass("active");
+$(document).ready(function () {
+  tableOptions = {
+    ajax: "{% url 'products:get_table' %}?product",
+    "scrollY":        "300px",
+    "scrollCollapse": true,
+    "paging": false,
+    "order": [[ 1, 'asc' ], [ 2, 'asc' ]],
+    columnDefs: [
+      {targets: '_all', className: 'mdl-data-table__cell--non-numeric'},
+    ]
+  };
+  var table = $('#data-table').DataTable(tableOptions);
+
+  {% if deleted %}
+  showNotification('bottom','right','{{message}}','success');
+  {% endif %}
+
+
+  $('body').on('submit', '#add-product', function (e){
+    e.preventDefault();
+    $('#add-product-button').button("loading");
+    if($('#product').val() == '')
+    {
+      showNotification('bottom','right',"Please input a product name",'danger');
+      $('#add-product-button').button("reset");
+    }
+    else {
+      $.ajax({
+        url : '{% url "products:add" %}',
+        type: "POST",
+        data: $(this).serialize(),
+        success: function (data) {
+          $('#add-product-button').button("reset");
+          showNotification('bottom','right',data,'success');
+          table.ajax.reload();
+          $('#product').val('');
+        },
+        error: function (jXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+          $('#add-product-button').button("reset");
+        }
+      });
+    }
+  });
+});
+</script>
+{% endblock javascript %}
