@@ -11,7 +11,7 @@ from .models import vulnerability,affects
 from cpe.models import component,component_to_server
 from products.models import server
 from django.db.models import Q
-from vms.settings import USE_ELASTIC_SEARCH
+from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
 from pkg_resources import parse_version
 from datetime import datetime
 
@@ -74,7 +74,7 @@ class cve_handler:
             from elasticsearch import Elasticsearch
             from elasticsearch import helpers
             self.helpers = helpers
-            self.es = Elasticsearch()
+            self.es = Elasticsearch(ELASTIC_SEARCH_URL)
 
     def update_db(self,year):
         filename = CVE_FEED_FILENAME.replace('$$$$',year) + '.json'

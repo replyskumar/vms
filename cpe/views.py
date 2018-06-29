@@ -8,7 +8,7 @@ from django.db.models import F
 from django.http import JsonResponse,HttpResponse
 from .tasks import add_cpe_from_csv,add_rpm_from_file,add_rpm
 from cve.tasks import add_vulns
-from vms.settings import USE_ELASTIC_SEARCH
+from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
 
 @login_required
 def index(request):
@@ -113,7 +113,7 @@ def autocomplete(request):
     elif 'searchall' in request.GET and request.GET['searchall'] is not '':
         if USE_ELASTIC_SEARCH:
             from elasticsearch import Elasticsearch
-            es = Elasticsearch()
+            es = Elasticsearch(ELASTIC_SEARCH_URL)
             query = {"query" : {"match":{"title": request.GET['searchall']}}}
             res = es.search(index="cpe-names",body=query,size=100)
             for item in res["hits"]["hits"]:

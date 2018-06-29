@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -56,16 +57,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'vms.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vms',
-        'USER': 'root',
-        'PASSWORD': 'toor',
-        'OPTIONS': {
-            'init_command': 'SET default_storage_engine=MYISAM',
-        },
-    }
 }
+
+DATABASES['default'] = dj_database_url.parse(os.environ.get('CLEARDB_DATABASE_URL','mysql://root:toor@localhost:3306/vms'), conn_max_age=600)
+
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -110,3 +105,4 @@ LOGIN_URL = '/accounts/login'
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 USE_ELASTIC_SEARCH = True
+ELASTIC_SEARCH_URL = os.environ.get('BONSAI_URL',"http://localhost:9200")

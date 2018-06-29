@@ -14,7 +14,7 @@ from .models import component, component_to_server
 from products.models import server,product
 from cve.tasks import add_vuln
 import re
-from vms.settings import USE_ELASTIC_SEARCH
+from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
 from pkg_resources import parse_version
 
 FEED_URL = 'http://nvd.nist.gov/feeds/xml/cpe/dictionary/'
@@ -85,7 +85,7 @@ class cpe_handler:
             from elasticsearch import Elasticsearch
             from elasticsearch import helpers
             self.helpers = helpers
-            self.es = Elasticsearch()
+            self.es = Elasticsearch(ELASTIC_SEARCH_URL)
 
     def update_db(self):
         if environ.get('http_proxy') is not None:
@@ -267,7 +267,7 @@ class Rpm:
 
         if USE_ELASTIC_SEARCH:
             from elasticsearch import Elasticsearch
-            self.es = Elasticsearch()
+            self.es = Elasticsearch(ELASTIC_SEARCH_URL)
 
     def set_rpm(self, rpm_name):
         try:
