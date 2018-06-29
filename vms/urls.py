@@ -21,8 +21,7 @@ urlpatterns = [
 APP_ROOT = os.path.abspath(os.path.join(os.path.abspath(__file__),'../..'))
 
 def initial_download():
-    print(os.environ)
-    if os.environ.get('HEROKU','') == 'True':
+    if os.environ.get('DOWNLOAD','True') == 'True':
         if not os.path.exists(os.path.join(APP_ROOT,'cve/cache')):
             os.makedirs(os.path.join(APP_ROOT,'cve/cache'))
             from cve.utils import cve_handler
