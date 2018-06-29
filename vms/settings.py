@@ -104,5 +104,5 @@ LOGIN_URL = '/accounts/login'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
-USE_ELASTIC_SEARCH = os.environ.get('USE_ELASTIC_SEARCH',False) == 'True'
+USE_ELASTIC_SEARCH = os.environ.get('USE_ELASTIC_SEARCH','False') == 'True'
 ELASTIC_SEARCH_URL = os.environ.get('ELASTICSEARCH_URL',"http://localhost:9200")
