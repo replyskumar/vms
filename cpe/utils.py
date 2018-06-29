@@ -199,7 +199,7 @@ class cpe_handler:
                     }
                 }
                 self.es.indices.create(index="cpe-names", ignore=400, body=mappings)
-                self.helpers.bulk(self.es, actions,request_timeout=30)
+                self.helpers.bulk(self.es, actions,request_timeout=60)
             except Exception as e:
                 print("[!] Elasticsearch indexing error: " + str(e))
 
