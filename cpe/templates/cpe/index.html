@@ -1,0 +1,309 @@
+{% extends 'main/base.html' %}
+{% block color %}purple{% endblock color %}
+{% block title %}
+VMS - Components
+{% endblock title %}
+{% block css %}
+<link href="/static/main/css/dataTables.material.min.css" rel="stylesheet" />
+<link href="/static/main/css/material.min.css" rel="stylesheet" />
+{% endblock css %}
+{% block heading %}
+Add Component
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+          <div class="card-header" data-background-color="purple">
+              <h4 class="title">Add Component</h4>
+              <p class="category">
+              Enter CPE URI
+              </p>
+          </div>
+          <div class="card-content">
+              <form id="add-cpe" action="" method="POST" class="form">
+                <input type="hidden" id="selected-product" name="product"/>
+                <input type="hidden" id="selected-server" name="server"/>
+                  {% csrf_token %}
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="dropdown" id="products-dropdown">
+                        <button id="product-name" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Product
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                          {% for i in products %}
+                          <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="dropdown" id="servers-dropdown">
+                        <button id="server-name" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Server
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" id="server-dropdown-area">
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-12">
+                          <div class="form-group label-floating">
+                              <label >CPE URI</label>
+                              <input name='cpe' type="text" class="form-control" placeholder="Enter CPE 2.2 URI or CPE 2.3 URI"/>
+                          </div>
+                      </div>
+                  </div>
+                  <button id="add-cpe-button" type="submit" class="btn btn-primary pull-right" id="submit-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add Component</button>
+                  <div class="clearfix"></div>
+              </form>
+          </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header" data-background-color="purple">
+          <h4 class="title">Add Components from File</h4>
+          <p class="category">
+          Upload File
+          </p>
+        </div>
+        <div class="card-content">
+          <div class="row" id="rpm-selector" style="display:none;">
+            <div class="col-md-6">
+              <div class="dropdown" id="products-dropdown2">
+                <button id="product-name2" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Product
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  {% for i in products %}
+                  <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="dropdown" id="servers-dropdown2">
+                <button id="server-name2" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Server
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" id="server-dropdown-area2">
+                </ul>
+              </div>
+            </div>
+          </div>
+          <form id="file-query">
+            {% csrf_token %}
+            <input type="hidden" id="selected-product2" name="product"/>
+            <input type="hidden" id="selected-server2" name="server"/>
+            <div class="radio">
+              <label>
+                <input type="radio" name="filetype" value="csv" id="csv-radio" checked>
+                CSV
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="filetype" value="rpm" id="rpm-radio">
+                RPM List
+              </label>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <input type="file" name="file_location" id="file_location"/>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary pull-right" id="file-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add From File</button>
+            <div class="clearfix"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header" data-background-color="purple">
+          <h4 class="title">Components</h4>
+          <p class="category">View and delete components</p>
+        </div>
+        <div class="card-content">
+          <form id="delete-form" method="POST" action="">
+            {% csrf_token %}
+            <button type="button" class="btn btn-danger pull-left" id="delete-button" data-toggle="modal" data-target="#confirmationModal">Delete</button>
+            <table id="data-table" class="mdl-data-table">
+              <thead>
+                <tr>
+                  <th>Select</th>
+                  <th>Product</th>
+                  <th>Server</th>
+                  <th>CPE</th>
+                  <th>Title</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="Are you sure" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    Do you want to delete the selected items?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Go back</button>
+                    <button type="submit" class="btn btn-danger" id="delete-confirm">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<form id="dropdown-form">
+  {% csrf_token %}
+  <input type='hidden' id="sel-pro" name='product'/>
+</form>
+{% endblock content%}
+{% block javascript %}
+<script src='/static/main/js/jquery.dataTables.min.js'></script>
+<script src='/static/main/js/dataTables.material.min.js'></script>
+<script src='/static/main/js/ellipsis.js'></script>
+<script type="text/javascript">
+$("#nav-components").addClass("active");
+$(document).ready(function () {
+  tableOptions = {
+    "ajax": '{% url "components:get_table" %}',
+    "scrollY":        "200px",
+    "scrollCollapse": true,
+    "paging": false,
+    "order": [[ 1, 'asc' ], [ 2, 'asc' ],[ 4, 'asc' ]],
+    columnDefs: [
+      {targets: '_all', className: 'mdl-data-table__cell--non-numeric'},
+      {targets: [3],render: $.fn.dataTable.render.ellipsis( 50)},
+      {targets: [4],render: $.fn.dataTable.render.ellipsis( 70)}
+    ]
+  };
+  var table = $('#data-table').DataTable(tableOptions);
+  {% if deleted %}
+  showNotification('bottom','right','{{message}}','success');
+  {% endif %}
+  $("#products-dropdown a").click(function(){
+    $('#selected-product').val($(this).attr('id'));
+    $('#sel-pro').val($(this).attr('id'));
+    $('#product-name').html($(this).attr('value')+' <span class="caret"></span>');
+    $('#server-name').html('Select Server <span class="caret"></span>');
+    $('#selected-server').val('');
+    $.ajax({
+      url : '{% url "components:get_dropdown" %}',
+      type: "POST",
+      data: $('#dropdown-form').serialize(),
+      success: function (data) {
+        $('#server-dropdown-area').html(data);
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+      }
+    });
+  });
+  $('body').on('click', '#servers-dropdown a', function (){
+    $('#selected-server').val($(this).attr('id'));
+    $('#server-name').html($(this).attr('value')+' <span class="caret"></span>');
+  });
+  $('body').on('submit', '#add-cpe', function (e){
+    e.preventDefault();
+    $('#add-cpe-button').button("loading");
+    if($('#selected-server').val() == '' || $('#selected-product').val() == '')
+    {
+      showNotification('bottom','right',"Select a server and product!",'danger');
+      $('#add-cpe-button').button("reset");
+    }
+    else {
+      $.ajax({
+        url : '{% url "components:add" %}',
+        type: "POST",
+        data: $(this).serialize(),
+        success: function (data) {
+          $('#add-cpe-button').button("reset");
+          showNotification('bottom','right',data.message,data.type);
+          table.ajax.reload();
+        },
+        error: function (jXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+          $('#add-cpe-button').button("reset");
+        }
+      });
+    }
+  });
+  $('#file-query').on('submit',function(e){
+    e.preventDefault();
+    var formData = new FormData(this);
+    $('#file-button').button("loading");
+    if($("input[name='filetype']:checked").val() == 'rpm' && ($('#selected-server2').val() == '' || $('#selected-product2').val() == '' || $("#file_location").val() == ''))
+    {
+      showNotification('bottom','right',"Select a server and product and a file!",'danger');
+      $('#file-button').button("reset");
+      return;
+    }
+    $.ajax({
+      type: "POST",
+      enctype: 'multipart/form-data',
+      url : '{% url "components:add" %}',
+      data: formData,
+      processData: false,
+      contentType: false,
+      cache: false,
+      timeout: 600000,
+      success: function (data) {
+        $('#file-button').button("reset");
+        showNotification('bottom','right',data,'success');
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+        $('#file-button').button("reset");
+      }
+    });
+  });
+  $("#products-dropdown2 a").click(function(){
+    $('#selected-product2').val($(this).attr('id'));
+    $('#sel-pro').val($(this).attr('id'));
+    $('#product-name2').html($(this).attr('value')+' <span class="caret"></span>');
+    $('#server-name2').html('Select Server <span class="caret"></span>');
+    $('#selected-server2').val('');
+    $.ajax({
+      url : '{% url "components:get_dropdown" %}',
+      type: "POST",
+      data: $('#dropdown-form').serialize(),
+      success: function (data) {
+        $('#server-dropdown-area2').html(data);
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+      }
+    });
+  });
+  $('body').on('click', '#servers-dropdown2 a', function (){
+    $('#selected-server2').val($(this).attr('id'));
+    $('#server-name2').html($(this).attr('value')+' <span class="caret"></span>');
+  });
+  $('#rpm-radio').on('click',function(){
+    $('#rpm-selector').fadeIn();
+  });
+  $('#csv-radio').on('click',function(){
+    $('#rpm-selector').fadeOut();
+  });
+});
+</script>
+{% endblock javascript %}

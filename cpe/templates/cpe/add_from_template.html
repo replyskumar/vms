@@ -1,0 +1,231 @@
+{% extends 'main/base.html' %}
+{% block color %}purple{% endblock color %}
+{% block title %}
+VMS - Products
+{% endblock title %}
+{% block css %}
+<link href="/static/main/css/dataTables.material.min.css" rel="stylesheet" />
+<link href="/static/main/css/material.min.css" rel="stylesheet" />
+<link href="/static/main/css/typeahead.css" rel="stylesheet" />
+{% endblock css %}
+{% block heading %}
+Add Multiple Components
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header" data-background-color="purple">
+            <h4 class="title">Add multiple components</h4>
+        </div>
+        <div class="card-content">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="row">
+                <div class="col-md-6">
+                  <div id="autocomplete" class="form-group label-floating ">
+                      <label >Component</label>
+                      <input id="cpe-name" type="text" class="form-control typeahead"/>
+                    </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group label-floating ">
+                      <label >CPE URI</label>
+                      <input id="cpe" type="text" class="form-control typeahead"  disabled/>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="row">
+                <label>Fetch components</label><br>
+                <button id="fetch" class="btn btn-info" type="button">Fetch Components</button>
+              </div>
+              <div class="row">
+                <label>Add/Save Component</label><br>
+                <button id="add" class="btn btn-success" type="button">Add</button>
+                <button id="save" class="btn btn-success" type="button">Save</button>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="row">
+                <div class="dropdown" id="products-dropdown">
+                  <label >Select Product</label><br>
+                  <button id="product-name" class="btn dropdown-toggle" type="button" data-toggle="dropdown">Select Product
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    {% for i in products %}
+                    <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+              <div class="row">
+                <div class="dropdown" id="servers-dropdown">
+                  <label >Select Server</label><br>
+                  <button id="server-name" class="btn dropdown-toggle" type="button" data-toggle="dropdown">Select Server
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" id="server-dropdown-area">
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-content">
+          <table id="data-table" class="mdl-data-table">
+            <thead>
+              <th>Component</th>
+              <th>CPE</th>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id ="editModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" id="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="modal-title">Loading..</h4>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <div class="row">
+          <input id="edit-cpe-name" type="text" class="form-control typeahead"/>
+        </div>
+        <div class="row">
+          <input id="edit-cpe" type="text" class="form-control" disabled />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form id="dropdown-form">
+  {% csrf_token %}
+  <input type='hidden' id="sel-pro" name='product'/>
+</form>
+
+{% endblock content%}
+{% block javascript %}
+<script src='/static/main/js/jquery.dataTables.min.js'></script>
+<script src='/static/main/js/dataTables.material.min.js'></script>
+<script src='/static/main/js/ellipsis.js'></script>
+<script src='/static/main/js/typeahead.bundle.min.js'></script>
+<script type="text/javascript">
+$("#nav-components").addClass("active");
+$(document).ready(function () {
+  var tableOptions = {
+    dom: 'Bfrtip',
+    fnInitComplete: function(oSettings) {
+                        $( window ).resize();
+                    },
+    fnDrawCallback: function(oSettings) {
+      $( window ).trigger('resize');
+    },
+    "scrollX": true,
+    "scrollCollapse": true,
+    "paging": true,
+    columnDefs: [
+      {targets: '_all', className: 'mdl-data-table__cell--non-numeric text-center',render: $.fn.dataTable.render.ellipsis( 74)},
+    ],
+  };
+
+  var table = $('#data-table').DataTable(tableOptions);
+
+  var components = new Bloodhound({
+    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    remote: {
+      url: "{% url 'components:autocomplete' %}?searchall=%QUERY",
+      wildcard: '%QUERY'
+    }
+  });
+
+  $('#autocomplete .typeahead').typeahead(null, {
+    name: 'components',
+    display: 'name',
+    limit: '1000000',
+    source: components
+  });
+
+  $('.typeahead').on('typeahead:selected', function(evt, item) {
+    $('#cpe').val(item.cpe);
+  });
+
+  $('#cpe-name').on('input',function(){
+    $('#cpe').val('');
+  });
+
+  $('#add').on('click',function(){
+    if($('#cpe').val() == '')
+    {
+      showNotification('bottom','right','Select a component first!','danger');
+      return;
+    }
+    var newRow = table.row.add([$('#cpe-name').val(),$('#cpe').val()]).draw(false).node();
+    $(newRow).attr('id','0');
+    $('#cpe').val('');
+    $('#cpe-name').val('');
+  });
+
+  var triggerItem;
+
+  $('#editModal').modal({
+      keyboard: true,
+      backdrop: "static",
+      show:false,
+    }).on('shown.bs.modal', function(e){
+      triggerItem = $(e.relatedTarget);
+      alert(triggerItem);
+
+  });
+
+  $('body').on('hidden.bs.modal','#detailModal',function(){
+    alert("hidden");
+  });
+
+  $("#products-dropdown a").click(function(){
+    $('#selected-product').val($(this).attr('id'));
+    $('#sel-pro').val($(this).attr('id'));
+    $('#product-name').html($(this).attr('value')+' <span class="caret"></span>');
+    $('#server-name').html('Select Server <span class="caret"></span>');
+    $('#selected-server').val('');
+    $.ajax({
+      url : '{% url "components:get_dropdown" %}',
+      type: "POST",
+      data: $('#dropdown-form').serialize(),
+      success: function (data) {
+        $('#server-dropdown-area').html(data);
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+      }
+    });
+  });
+  $('body').on('click', '#servers-dropdown a', function (){
+    $('#server-name').html($(this).attr('value')+' <span class="caret"></span>');
+  });
+});
+</script>
+{% endblock javascript %}

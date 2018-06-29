@@ -1,0 +1,5 @@
+{% if servers %}
+{% for i in servers %}
+<li><a class="server-select" href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+{% endfor %}
+{% endif %}
