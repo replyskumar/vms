@@ -1,0 +1,20 @@
+{% extends 'main/base.html' %}
+{% block color %}green{% endblock color %}
+{% block title %}
+VMS - Home
+{% endblock title %}
+{% block heading %}
+Vulnerability Management System
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="embed-responsive embed-responsive-16by9">
+    <iframe class="embed-responsive-item" src="http://localhost:5601/app/kibana#/dashboard/fb743f00-79d3-11e8-8c15-cd353385c214?embed=true&_g=(refreshInterval%3A(display%3AOff%2Cpause%3A!f%2Cvalue%3A0)%2Ctime%3A(from%3A'1989-12-31T18%3A30%3A00.000Z'%2Cmode%3Aabsolute%2Cto%3A'2018-06-27T10%3A13%3A55.153Z'))"></iframe>
+  </div>
+</div>
+{% endblock content%}
+{% block javascript %}
+<script>
+  $("#nav-dash").addClass("active");
+</script>
+{% endblock javascript %}

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>{% block title %}{% endblock title %}</title>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/static/main/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/static/main/css/material-dashboard.css?v=1.2.0" rel="stylesheet" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700,300|Material+Icons" rel='stylesheet'>
+    {% block css %}{% endblock css %}
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="sidebar" data-color="{% block color %}{% endblock color %}" data-image="/static/main/images/sidebar-1.jpg">
+
+            <div class="logo">
+                <a href="{% url 'home' %}" class="simple-text">
+                    VMS
+                </a>
+            </div>
+            <div class="sidebar-wrapper">
+                <ul class="nav">
+                    <li id="nav-dash">
+                        <a href="{% url 'home' %}">
+                            <i class="material-icons">dashboard</i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+                    <li id="nav-user">
+                        <a href="{% url 'profile' %}">
+                            <i class="material-icons">person</i>
+                            <p>User Profile</p>
+                        </a>
+                    </li>
+
+                    <li id="nav-notifications">
+                        <a href="{% url 'notifications:index' %}">
+                            <i class="material-icons text-gray">notifications</i>
+                            <p>Notifications</p>
+                        </a>
+                    </li>
+
+                    <li id="nav-products">
+                        <a href="{% url 'products:index' %}">
+                            <i class="material-icons text-gray">work</i>
+                            <p>Products</p>
+                        </a>
+                    </li>
+
+                    <li id="nav-servers">
+                        <a href="{% url 'products:servers' %}">
+                            <i class="material-icons text-gray">dns</i>
+                            <p>Servers</p>
+                        </a>
+                    </li>
+
+                    <li id="nav-components">
+                        <a href="{% url 'components:index' %}">
+                            <i class="material-icons text-gray">tab</i>
+                            <p>Components</p>
+                        </a>
+                    </li>
+
+                    <li id="nav-vulns">
+                        <a href="{% url 'vulnerabilities:index' %}">
+                            <i class="material-icons text-gray">warning</i>
+                            <p>Vulnerabilities</p>
+                        </a>
+                    </li>
+
+
+                </ul>
+            </div>
+        </div>
+        <div class="main-panel">
+            <nav class="navbar navbar-transparent navbar-absolute">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="#"> {% block heading %}{% endblock heading %} </a>
+                    </div>
+                    <div class="collapse navbar-collapse">
+                        <ul class="nav navbar-nav navbar-right">
+                            <li class="dropdown">
+                                <a href="{% url 'notifications:index' %}" class="dropdown-toggle" data-toggle="dropdown" id="notif-dropdown">
+                                    <i class="material-icons">notifications</i>
+                                    <span class="notification" id="count-display"></span>
+                                    <p class="hidden-lg hidden-md">Notifications</p>
+                                </a>
+                                <ul class="dropdown-menu" id="notification-div">
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="{% url 'logout'%}?next={{request.path}}">
+                                  <button rel="tooltip" title="Logout" class="btn btn-simple btn-xs" data-placement="bottom">
+                                    <i class="material-icons">power_settings_new</i>
+                                    <p class="hidden-lg hidden-md">Logout</p>
+                                  </button>
+                                </a>
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+            </nav>
+            <div class="content">
+              {% block content %}{% endblock content %}
+            </div>
+            <footer class="footer">
+                <div class="container-fluid">
+                    <nav class="pull-left">
+                        <ul>
+                            <li>
+                                <a href="{% url 'home' %}">
+                                    Home
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'logout'%}?next={{request.path}}">
+                                    Logout
+                                </a>
+                            </li>
+
+                        </ul>
+                    </nav>
+                    <p class="copyright pull-right">
+                        &copy;
+                        <script>
+                            document.write(new Date().getFullYear())
+                        </script>
+                        <a href="http://techmahindra.com">Tech Mahindra</a>
+                    </p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <form action="" method="POST" id="notif-form">
+      {% csrf_token %}
+    </form>
+</body>
+<!--   Core JS Files   -->
+<script src="/static/main/js/jquery-3.2.1.min.js" type="text/javascript"></script>
+<script src="/static/main/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="/static/main/js/material.min.js" type="text/javascript"></script>
+<script src="/static/main/js/arrive.min.js"></script>
+<script src="/static/main/js/perfect-scrollbar.jquery.min.js"></script>
+<script src="/static/main/js/bootstrap-notify.js"></script>
+<script src="/static/main/js/material-dashboard.js?v=1.2.0"></script>
+{% block javascript %}{% endblock javascript %}
+<script type="text/javascript">
+var flag = 1;
+function checkNotifications(){
+  $.ajax({
+    url : '{% url "notifications:get" %}',
+    type: "POST",
+    data: $("#notif-form").serialize(),
+    success: function (data) {
+      $("#notification-div").html(data);
+      $("#count-display").html($("#notif-count").val());
+      if(!flag){
+        flag = 1;
+        showNotification("bottom","right","Connected to server","success");
+      }
+    },
+    error: function (jXHR, textStatus, errorThrown) {
+      if(flag){
+        flag = 0;
+        showNotification("bottom","right","Connectivity to server lost!","warning");
+      }
+    }
+  });
+}
+$(document).ready(function () {
+  checkNotifications();
+  $("#notif-dropdown").on("click",checkNotifications);
+  setInterval(checkNotifications,60000);
+});
+</script>
+
+
+</html>

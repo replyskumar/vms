@@ -1,0 +1,131 @@
+{% extends 'main/base.html' %}
+{% block color %}orange{% endblock color %}
+{% block title %}
+VMS - Profile
+{% endblock title %}
+{% block heading %}
+User Profile
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="row">
+          <div class="col-md-8" id="alerts">
+          </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header" data-background-color="orange">
+                    <h4 class="title">Your Profile</h4>
+                    <p class="category">Edit details</p>
+                </div>
+                <div class="card-content">
+                    <form id="update-profile" action="" method="POST" class="form">
+                        {% csrf_token %}
+                        <div class="row">
+
+                            <div class="col-md-3">
+                                <div class="form-group label-floating">
+                                    <label class="control-label">Username</label>
+                                    <input type="text" class="form-control" value="{{username}}" disabled/>
+                                    <input type="hidden" name="userid" value="{{username}}"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group label-floating">
+                                    <label class="control-label">Email address</label>
+                                    <input name="email" type="email" class="form-control" value="{{email}}" style="background-image: linear-gradient(orange, orange), linear-gradient(#D2D2D2, #D2D2D2);"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group label-floating">
+                                    <label class="control-label">Fist Name</label>
+                                    <input name="first_name" type="text" class="form-control" value="{{first_name}}" style="background-image: linear-gradient(orange, orange), linear-gradient(#D2D2D2, #D2D2D2);"/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group label-floating">
+                                    <label class="control-label">Last Name</label>
+                                    <input name="last_name" type="text" class="form-control" value="{{last_name}}" style="background-image: linear-gradient(orange, orange), linear-gradient(#D2D2D2, #D2D2D2);"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning pull-right" id="update-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating">Update Profile</button>
+                        <div class="clearfix"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+              <div class="card-header" data-background-color="orange">
+                  <h4 class="title">Change Password</h4>
+
+              </div>
+              <div class="card-content">
+                  <form id="password-update" action="" method="POST" class="form">
+                      {% csrf_token %}
+                      <div class="row">
+                        <div class="col-md-10">
+                            <div class="form-group label-floating">
+                                <label class="control-label">Old Password</label>
+                                <input name="old_password" type="password" class="form-control" style="background-image: linear-gradient(orange, orange), linear-gradient(#D2D2D2, #D2D2D2);">
+                            </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-md-10">
+                            <div class="form-group label-floating">
+                                <label class="control-label">New Password</label>
+                                <input name="new_password" type="password" class="form-control" style="background-image: linear-gradient(orange, orange), linear-gradient(#D2D2D2, #D2D2D2);">
+                            </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-md-10">
+                            <div class="form-group label-floating">
+                                <label class="control-label">New Password Again</label>
+                                <input name="new_password_again" type="password" class="form-control" style="background-image: linear-gradient(orange, orange), linear-gradient(#D2D2D2, #D2D2D2);">
+                            </div>
+                        </div>
+                      </div>
+
+                      <button type="submit" class="btn btn-warning pull-right" id="password-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating">Update Password</button>
+                      <div class="clearfix"></div>
+                  </form>
+              </div>
+          </div>
+        </div>
+    </div>
+</div>
+{% endblock content%}
+{% block javascript %}
+<script type="text/javascript">
+$("#nav-user").addClass("active");
+$(document).ready(function () {
+
+  $('.form').on('submit', function(e) {
+    e.preventDefault();
+    $('.btn').button("loading");
+    $.ajax({
+      url : '{% url "accountmanager" %}',
+      type: "POST",
+      data: $(this).serialize(),
+      success: function (data) {
+        $('.btn').button("reset");
+        showNotification('bottom','right',data,'success');
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+        $('.btn').button("reset");
+      }
+    });
+  });
+
+
+});
+</script>
+{% endblock javascript %}
