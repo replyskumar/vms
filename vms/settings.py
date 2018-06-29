@@ -60,6 +60,10 @@ WSGI_APPLICATION = 'vms.wsgi.application'
 DATABASES = {
 }
 
+RUN_MODE = '' 
+if len(sys.argv) > 1:
+    RUN_MODE = sys.argv[1]
+
 DATABASES['default'] = dj_database_url.config(default='mysql://root:toor@localhost:3306/vms')
 
 AUTH_PASSWORD_VALIDATORS = [

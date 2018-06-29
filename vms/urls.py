@@ -5,6 +5,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from . import views
 import os
 from datetime import datetime
+from vms.settings import RUN_MODE
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -21,19 +22,20 @@ urlpatterns = [
 APP_ROOT = os.path.abspath(os.path.join(os.path.abspath(__file__),'../..'))
 
 def initial_download():
-    if not os.path.exists(os.path.join(APP_ROOT,'cve/cache')):
-        os.makedirs(os.path.join(APP_ROOT,'cve/cache'))
-        from cve.utils import cve_handler
-        obj = cve_handler()
-        for year in range(2002,datetime.now().year + 1):
-            obj.update_db(str(year))
-            print("CVE-"+str(year)+" updated!")
+    if RUN_MODE == 'runserver':
+        if not os.path.exists(os.path.join(APP_ROOT,'cve/cache')):
+            os.makedirs(os.path.join(APP_ROOT,'cve/cache'))
+            from cve.utils import cve_handler
+            obj = cve_handler()
+            for year in range(2002,datetime.now().year + 1):
+                obj.update_db(str(year))
+                print("CVE-"+str(year)+" updated!")
 
-    if not os.path.exists(os.path.join(APP_ROOT,'cpe/cache')):
-        makedirs(os.path.join(APP_ROOT,'cpe/cache'))
-        from cpe.utils import cpe_handler
-        obj = cpe_handler()
-        obj.update_db()
-        print("CPE db updated!")
+        if not os.path.exists(os.path.join(APP_ROOT,'cpe/cache')):
+            os.makedirs(os.path.join(APP_ROOT,'cpe/cache'))
+            from cpe.utils import cpe_handler
+            obj = cpe_handler()
+            obj.update_db()
+            print("CPE db updated!")
 
 initial_download()
