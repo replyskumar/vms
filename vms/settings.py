@@ -7,7 +7,7 @@ SECRET_KEY = 'p720a@cagjnn-)%%tbi+&thrh$+6&uy@h_+rm2(n98v@c_ev+v'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost","127.0.0.1",]
+ALLOWED_HOSTS = ["localhost","127.0.0.1","http://vms-techm.herokuapp.com/"]
 
 
 INSTALLED_APPS = [
@@ -59,7 +59,7 @@ WSGI_APPLICATION = 'vms.wsgi.application'
 DATABASES = {
 }
 
-DATABASES['default'] = dj_database_url.parse(os.environ.get('CLEARDB_DATABASE_URL','mysql://root:toor@localhost:3306/vms'), conn_max_age=600)
+DATABASES['default'] = dj_database_url.parse(os.environ.get('CLEARDB_DATABASE_URL','mysql://root:toor@localhost:3306/vms').replace('?reconnect=true',''), conn_max_age=600)
 
 
 
