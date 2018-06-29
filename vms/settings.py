@@ -59,7 +59,7 @@ WSGI_APPLICATION = 'vms.wsgi.application'
 DATABASES = {
 }
 
-DATABASES['default'] = dj_database_url.parse(os.environ.get('CLEARDB_DATABASE_URL','mysql://root:toor@localhost:3306/vms').replace('?reconnect=true',''), conn_max_age=600)
+DATABASES['default'] = dj_database_url.config(default='mysql://root:toor@localhost:3306/vms')
 
 
 
@@ -104,5 +104,5 @@ LOGIN_URL = '/accounts/login'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
-USE_ELASTIC_SEARCH = False
-ELASTIC_SEARCH_URL = os.environ.get('BONSAI_URL',"http://localhost:9200")
+USE_ELASTIC_SEARCH = os.environ.get('USE_ELASTIC_SEARCH',False)
+ELASTIC_SEARCH_URL = os.environ.get('ELASTICSEARCH_URL',"http://localhost:9200")
