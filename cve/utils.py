@@ -187,7 +187,8 @@ class cve_handler:
 
         if USE_ELASTIC_SEARCH is True:
             try:
-                self.es.indices.delete(index='cve-'+year, ignore=[400, 404])
+                if self.es.indices.exists(index="cve-"+year):
+                    self.es.indices.delete(index='cve-'+year, ignore=[400, 404])
                 mappings = {
                     "mappings" : {
                         "vulns" : {

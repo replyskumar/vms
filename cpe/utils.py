@@ -173,7 +173,8 @@ class cpe_handler:
 
         if USE_ELASTIC_SEARCH:
             try:
-                self.es.indices.delete(index='cpe-names', ignore=[400, 404])
+                if self.es.indices.exists(index="cpe-names"):
+                    self.es.indices.delete(index='cpe-names', ignore=[400, 404])
                 mappings = {
                     "mappings" : {
                         "names" : {
