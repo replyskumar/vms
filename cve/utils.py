@@ -230,7 +230,7 @@ class cve_handler:
                     }
                 }
                 self.es.indices.create(index="cve-"+year, ignore=400, body=mappings)
-                self.helpers.bulk(self.es, actions)
+                self.helpers.bulk(self.es, actions,request_timeout=30)
             except Exception as e:
                 print("[!] Elasticsearch indexing error: " + str(e))
 
