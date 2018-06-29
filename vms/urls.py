@@ -5,7 +5,6 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from . import views
 import os
 from datetime import datetime
-from vms.settings import RUN_MODE
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -22,7 +21,7 @@ urlpatterns = [
 APP_ROOT = os.path.abspath(os.path.join(os.path.abspath(__file__),'../..'))
 
 def initial_download():
-    if RUN_MODE == 'runserver':
+    if os.environ.get('HEROKU','') == 'True':
         if not os.path.exists(os.path.join(APP_ROOT,'cve/cache')):
             os.makedirs(os.path.join(APP_ROOT,'cve/cache'))
             from cve.utils import cve_handler
