@@ -118,4 +118,12 @@ def autocomplete(request):
             res = es.search(index="cpe-names",body=query,size=100)
             for item in res["hits"]["hits"]:
                 response.append({"name": item["_source"]["title"],"cpe": item["_source"]["cpe_id"],"id": 0})
+        else:
+            obj = cpe_handler()
+            res = obj.get_all_cpe()
+            for item in res:
+                if request.GET['searchall'].lower() in res[item].lower():
+                    response.append({"name": res[item],"cpe": item,"id": 0})
+
+
     return JsonResponse(response, safe=False)
