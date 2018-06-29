@@ -1,0 +1,141 @@
+{% extends 'main/base.html' %}
+{% block color %}purple{% endblock color %}
+{% block title %}
+VMS - Vulnerabilities
+{% endblock title %}
+{% block css %}
+<link href="/static/main/css/dataTables.material.min.css" rel="stylesheet" />
+<link href="/static/main/css/material.min.css" rel="stylesheet" />
+<link href="/static/main/css/typeahead.css" rel="stylesheet" />
+{% endblock css %}
+{% block heading %}
+CVE
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8" id="alerts"></div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+          <div class="card-header" data-background-color="purple">
+              <h4 class="title">Query</h4>
+              <p class="category">
+              Select Parameters
+              </p>
+          </div>
+          <div class="card-content">
+              <form id="query-form" action="{% url 'vulnerabilities:query' %}" method="POST">
+                <input type="hidden" id="selected-product" name="product"/>
+                  {% csrf_token %}
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="dropdown" id="products-dropdown">
+                        <button id="product-name" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">All Product
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                          {% for i in products %}
+                          <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="control-label">From Date</label>
+                      <input class="form-control" type="date" name="from_date" id="from-date" />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="control-label">To Date</label>
+                      <input class="form-control" type="date" name="to_date" id="to-date"/>
+                    </div>
+                  </div>
+                  <button id="query-button" type="submit" class="btn btn-primary pull-right" id="submit-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Get Vulnerabilities</button>
+                  <div class="clearfix"></div>
+              </form>
+          </div>
+      </div>
+      <div class="card">
+          <div class="card-header" data-background-color="purple">
+              <h4 class="title">Query</h4>
+              <p class="category">
+              Select Parameters
+              </p>
+          </div>
+          <div class="card-content">
+              <form id="query-form2" action="{% url 'vulnerabilities:query' %}" method="POST">
+                <input type="hidden" id="selected-component" name="cpe"/>
+                  {% csrf_token %}
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label class="control-label">Select Component</label>
+
+
+                      <div id="autocomplete">
+                        <input class="typeahead form-control" type="text"/>
+                      </div>
+
+
+                    </div>
+                    <div class="col-md-3">
+                      <label class="control-label">From Date</label>
+                      <input class="form-control" type="date" name="from_date" id="from-date" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="control-label">To Date</label>
+                      <input class="form-control" type="date" name="to_date" id="to-date"/>
+                    </div>
+                  </div>
+                  <button id="query-button" type="submit" class="btn btn-primary pull-right" id="submit-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Get Vulnerabilities</button>
+                  <div class="clearfix"></div>
+              </form>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<form id="get-vuln">
+  {% csrf_token %}
+  <input type="hidden" name="affect-id" id="affect-id"/>
+</form>
+
+{% endblock content%}
+{% block javascript %}
+<script src='/static/main/js/typeahead.bundle.min.js'></script>
+<script type="text/javascript">
+$("#nav-vulns").addClass("active");
+
+$(document).ready(function () {
+
+  var components = new Bloodhound({
+    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    remote: {
+      url: "{% url 'components:autocomplete' %}?search=%QUERY",
+      wildcard: '%QUERY'
+    }
+  });
+
+  $('#autocomplete .typeahead').typeahead(null, {
+    name: 'components',
+    display: 'name',
+    limit: '1000000',
+    source: components
+  });
+
+  $('.typeahead').on('typeahead:selected', function(evt, item) {
+    $('#selected-component').val(item.id);
+  });
+
+  $("#products-dropdown a").click(function(){
+    alert($("#search-term").val());
+    $('#selected-product').val($(this).attr('id'));
+    $('#product-name').html($(this).attr('value')+' <span class="caret"></span>');
+  });
+  {% if error %}
+    showNotification('bottom','right',"Invalid inputs!",'danger');
+  {% endif %}
+});
+</script>
+{% endblock javascript %}

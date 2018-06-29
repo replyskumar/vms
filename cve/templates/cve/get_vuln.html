@@ -1,0 +1,46 @@
+<form id="update-vuln">
+  {% csrf_token %}
+  <input type="hidden" name="affect-id" value="{{results.id}}"/>
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title" id="modal-title">{{results.vuln_cve}}</h4>
+  </div>
+  <div class="modal-body" id="modal-body">
+    <div class="row">
+      <div class="col-md-6">
+        <strong>Product:</strong> {{results.product_name}}<br>
+        <strong>Affected Component:</strong> {{results.component_name}}<br>
+      </div>
+      <div class="col-md-6">
+        <strong>Server:</strong> {{results.server_name}}<br>
+        <strong>Component Name: </strong> {{results.component_title}}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <textarea rows="5" class="form-control" disabled> {{results.summary}}</textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <strong>Published:</strong> {{results.published}}<br>
+        <strong>Last Modified:</strong> {{results.last_modified}}<br>
+        <strong>Date of adding to DB:</strong> {{results.in_date}}<br>
+        <strong>Comments:</strong>
+        <textarea rows="4" cols="50" class="form-control" name="comments" id="comments">{{results.comments}}</textarea>
+      </div>
+      <div class="col-md-6">
+        <strong>Score v3:</strong> {% if results.score_v3 == 0.0 %}NA{% else %}{{results.score_v3}}{% endif %} <br>
+        <strong>Vector String v3:</strong> {% if results.vector_sting_v3 == '' %}NA{% else %}{{results.vector_sting_v3}}{% endif %}<br>
+        <strong>Score v2:</strong> {% if results.score_v2 == 0.0 %}NA{% else %}{{results.score_v2}}{% endif %} <br>
+        <strong>Vector String v2:</strong> {% if results.vector_sting_v2 == '' %}NA{% else %}{{results.vector_sting_v2}}{% endif %}<br>
+        <strong>Custom Score:</strong>
+        <input id="custom_score" name="custom_score" type="number" step="0.1" min="0.0" max="10.0" class="form-control" value="{{results.custom_score}}"/>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button id="update-vuln-button" type="submit" class="btn btn-primary">Save changes</button>
+  </div>
+</form>

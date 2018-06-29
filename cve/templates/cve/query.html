@@ -1,0 +1,205 @@
+{% extends 'main/base.html' %}
+{% block color %}purple{% endblock color %}
+{% block title %}
+VMS - Vulnerabilities
+{% endblock title %}
+{% block css %}
+<link href="/static/main/css/dataTables.material.min.css" rel="stylesheet" />
+<link href="/static/main/css/material.min.css" rel="stylesheet" />
+{% endblock css %}
+{% block heading %}
+Query Results
+{% endblock heading %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8" id="alerts"></div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header" data-background-color="purple">
+                <h4 class="title">Query Results</h4>
+                <p class="category">{{header}}</p>
+            </div>
+            <div class="card-content">
+              <div id="loading-text">
+                Loading...
+              </div>
+              <div id="table-content" style="display:none;">
+                <table id="data-table" class="mdl-data-table">
+                  <thead>
+                    <tr>
+                      {% if product %}<th>Product</th>{% endif %}
+                      <th>Server</th>
+                      <th>CPE</th>
+                      <th>CVE</th>
+                      <th style="white-space:normal;">Score V2</th>
+                      <th style="white-space:normal;">Score V3</th>
+                      <th style="white-space:normal;">Custom Score</th>
+                      <th>Comments</th>
+                      <th style="white-space:normal;">Published Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for i in results %}
+                    <tr data-toggle="modal" id="{{i.id}}" data-target="#detailModal">
+                      {% if product %}<td>{{i.product_name}}</td>{% endif %}
+                      <td>{{i.server_name}}</td>
+                      <td>{{i.component_name}}</td>
+                      <td>{{i.vuln_cve}}</td>
+                      <td>{{i.score_v2}}</td>
+                      <td>{% if i.score_v3 == 0.0 %}NA{% else %}{{i.score_v3}}{% endif %}</td>
+                      <td>{% if i.custom_score == 0.0 %}NA{% else %}{{i.custom_score}}{% endif %}</td>
+                      <td>{% if i.comments == '' %}NA{% else %}{{i.comments}}{% endif %}</td>
+                      <td>{{i.published}}</td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+
+<div id ="detailModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" id="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="modal-title">Loading..</h4>
+      </div>
+      <div class="modal-body" id="modal-body">
+        Loading...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+<form id="get-vuln">
+  {% csrf_token %}
+  <input type="hidden" name="affect-id" id="affect-id"/>
+</form>
+
+{% endblock content%}
+{% block javascript %}
+<script src='/static/main/js/jquery.dataTables.min.js'></script>
+<script src='/static/main/js/dataTables.material.min.js'></script>
+<script src='/static/main/js/dataTables.buttons.min.js'></script>
+<script src='/static/main/js/jszip.min.js'></script>
+<script src='/static/main/js/pdfmake.min.js'></script>
+<script src='/static/main/js/vfs_fonts.js'></script>
+<script src='/static/main/js/buttons.html5.min.js'></script>
+<script src='/static/main/js/ellipsis.js'></script>
+<script type="text/javascript">
+$("#nav-vulns").addClass("active");
+$(document).ready(function () {
+  var tableOptions = {
+    dom: 'Bfrtip',
+    buttons: [
+      {
+        extend: 'pdf',
+        text: 'Export as PDF',
+        className: 'btn btn-primary pull-left',
+        title: 'Vulnerability Report',
+        messageTop: 'This is a system generated table',
+        exportOptions: { orthogonal: 'export', columns: [ 0, 1, 2, 3, 4, 5, 6, 7 ] },
+        pageSize: 'A4'
+      },
+      {
+        extend: 'excel',
+        text: 'Export as Excel',
+        className: 'btn btn-primary pull-left',
+        title: 'Vulnerability Report',
+        messageTop: 'This is a system generated table',
+        exportOptions: { orthogonal: 'export'},
+        orientation: 'landscape',
+        pageSize: 'A4',
+      }
+    ],
+    autoWidth : true,
+    fnInitComplete: function(oSettings) {
+                        $( window ).resize();
+                    },
+    fnDrawCallback: function(oSettings) {
+      $( window ).trigger('resize');
+    },
+    "scrollX": true,
+    "scrollCollapse": true,
+    "paging": true,
+    "order": [[0, 'asc'],[ 1, 'asc' ],[ 4, 'desc' ],[ 5, 'desc' ],[ 6, 'desc' ]],
+    columnDefs: [
+      {targets: '_all', className: 'mdl-data-table__cell--non-numeric text-center'},
+      {targets: [2],render: $.fn.dataTable.render.ellipsis(30)},
+      {targets: [7],render: $.fn.dataTable.render.ellipsis(15)}
+    ],
+  };
+
+  var table = $('#data-table').DataTable(tableOptions);
+  $('#table-content').fadeIn();
+  $('#loading-text').hide();
+
+  var triggerRow;
+  $('#detailModal').modal({
+      keyboard: true,
+      backdrop: "static",
+      show:false,
+    }).on('shown.bs.modal', function(e){
+      triggerRow = $(e.relatedTarget);
+      var rowID = triggerRow.attr('id');
+      $("#affect-id").val(rowID);
+      $.ajax({
+        url : "{% url 'vulnerabilities:get' %}",
+        type: "POST",
+        data: $('#get-vuln').serialize(),
+        success: function (data) {
+          $('#modal-content').html(data);
+        },
+        error: function (jXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+        }
+      });
+  });
+
+  $('body').on('hidden.bs.modal','#detailModal',function(){
+    comments = $('#comments').val()
+    if(comments.length>15)
+      comments = '<span class="ellipsis" title="' + comments + '">'+ comments.substring(0,14) +' ...</span>';
+    else if(comments==='')
+      comments = 'NA';
+    score = $('#custom_score').val();
+    if(score === '0.0')
+      score = 'NA';
+    $(triggerRow.children()[{% if product %}7{% else %}6{% endif %}]).html(comments);
+    $(triggerRow.children()[{% if product %}6{% else %}5{% endif %}]).html(score);
+    $('#modal-body').html('Loading...');
+    $('#modal-title').html('Loading...');
+  });
+
+  $('body').on('submit','#update-vuln',function(e){
+    e.preventDefault();
+    $('#update-vuln-button').button("loading");
+    $.ajax({
+      url : "{% url 'vulnerabilities:update' %}",
+      type: "POST",
+      data: $('#update-vuln').serialize(),
+      success: function (data) {
+        $('#update-vuln-button').button("reset");
+        $('#detailModal').modal('toggle');
+        showNotification('bottom','right',data,'success');
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+        $('#update-vuln-button').button("reset");
+      }
+    });
+  });
+});
+</script>
+{% endblock javascript %}
