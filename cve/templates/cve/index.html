@@ -129,7 +129,6 @@ $(document).ready(function () {
   });
 
   $("#products-dropdown a").click(function(){
-    alert($("#search-term").val());
     $('#selected-product').val($(this).attr('id'));
     $('#product-name').html($(this).attr('value')+' <span class="caret"></span>');
   });
