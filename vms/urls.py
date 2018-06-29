@@ -5,7 +5,6 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from . import views
 import os
 from datetime import datetime
-from vms.settings import TESTING
 
 urlpatterns = [
     path('admin/', admin.site.urls),
