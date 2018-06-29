@@ -1,7 +1,6 @@
 language: python
 env:
-- DATABASE_URL='mysql://root:@localhost:3306/vms'
-- DOWNLOAD='False'
+- DATABASE_URL='mysql://root:@localhost:3306/vms' DOWNLOAD='False'
 python:
 - '3.6'
 services:
