@@ -18,3 +18,15 @@ class component_to_server(models.Model):
     id = models.AutoField(primary_key=True)
     server = models.ForeignKey(server, on_delete=models.CASCADE)
     cpe = models.ForeignKey(component, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now=True)
+
+class template(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255,blank=True)
+    timestamp = models.DateTimeField(auto_now=True)
+
+class template_to_cpe(models.Model):
+    id = models.AutoField(primary_key=True)
+    cpe = models.ForeignKey(component, on_delete=models.CASCADE)
+    template = models.ForeignKey(template, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now=True)
