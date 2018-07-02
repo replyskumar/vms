@@ -10,7 +10,7 @@ try:
     from cPickle import load, PickleError, dump, HIGHEST_PROTOCOL
 except ImportError:
     from pickle import load, PickleError, dump, HIGHEST_PROTOCOL
-from .models import component, component_to_server
+from .models import component, component_to_server,template,template_to_cpe
 from products.models import server,product
 from cve.tasks import add_vuln
 import re
@@ -258,6 +258,17 @@ class cpe_handler:
         new_comp.save()
         return [1,obj.title,]
 
+    def add_to_template(self,temp,cpe_id):
+        if component.objects.filter(cpe_id=cpe_id).exists():
+            cpe = component.objects.get(cpe_id=cpe_id)
+        elif component.objects.filter(wfs=cpe_id).exists():
+            cpe = component.objects.get(wfs=cpe_id)
+        else:
+            return -1
+        if not template_to_cpe.objects.filter(template=temp,cpe=cpe).exists():
+            t2c  = template_to_cpe(template=temp,cpe=cpe)
+            t2c.save()
+        return 1
 
 class Rpm:
 

@@ -57,68 +57,89 @@ Add Component
                           </div>
                       </div>
                   </div>
-                  <button id="add-cpe-button" type="submit" class="btn btn-primary pull-right" id="submit-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add Component</button>
-                  <div class="clearfix"></div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <a href="{% url 'components:add_from_template' %}"><span type="notsubmit" class="btn btn-warning pull-left">Advanced Add</span></a>
+                    </div>
+                    <div class="col-md-6">
+                      <button id="add-cpe-button" type="submit" class="btn btn-primary pull-right" id="submit-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add Component</button>
+                    </div>
+                  </div>
               </form>
           </div>
       </div>
     </div>
     <div class="col-md-6">
-      <div class="card">
-        <div class="card-header" data-background-color="purple">
-          <h4 class="title">Add Components from File</h4>
-          <p class="category">
-          Upload File
-          </p>
-        </div>
-        <div class="card-content">
-          <div class="row" id="rpm-selector" style="display:none;">
-            <div class="col-md-6">
-              <div class="dropdown" id="products-dropdown2">
-                <button id="product-name2" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Product
-                  <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                  {% for i in products %}
-                  <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="dropdown" id="servers-dropdown2">
-                <button id="server-name2" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Server
-                  <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" id="server-dropdown-area2">
-                </ul>
-              </div>
-            </div>
+      <div class="row">
+        <div class="card">
+          <div class="card-header" data-background-color="purple">
+            <h4 class="title">Add Components from File</h4>
+            <p class="category">
+            Upload File
+            </p>
           </div>
-          <form id="file-query">
-            {% csrf_token %}
-            <input type="hidden" id="selected-product2" name="product"/>
-            <input type="hidden" id="selected-server2" name="server"/>
-            <div class="radio">
-              <label>
-                <input type="radio" name="filetype" value="csv" id="csv-radio" checked>
-                CSV
-              </label>
-            </div>
-            <div class="radio">
-              <label>
-                <input type="radio" name="filetype" value="rpm" id="rpm-radio">
-                RPM List
-              </label>
-            </div>
-            <div class="row">
-              <div class="col-md-12">
-                <input type="file" name="file_location" id="file_location"/>
+          <div class="card-content">
+            <div class="row" id="rpm-selector" style="display:none;">
+              <div class="col-md-6">
+                <div class="dropdown" id="products-dropdown2">
+                  <button id="product-name2" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Product
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    {% for i in products %}
+                    <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="dropdown" id="servers-dropdown2">
+                  <button id="server-name2" class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Server
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" id="server-dropdown-area2">
+                  </ul>
+                </div>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary pull-right" id="file-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add From File</button>
-            <div class="clearfix"></div>
-          </form>
+            <form id="file-query">
+              {% csrf_token %}
+              <input type="hidden" id="selected-product2" name="product"/>
+              <input type="hidden" id="selected-server2" name="server"/>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="filetype" value="csv" id="csv-radio" checked>
+                  CSV
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="filetype" value="rpm" id="rpm-radio">
+                  RPM List
+                </label>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <input type="file" name="file_location" id="file_location"/>
+                </div>
+              </div>
+              <div class="row">
+                <div class="checkbox pull-left col-md-4">
+                  <br>
+                   <label>
+                       <input type="checkbox" name="save_template" id="template-radio" value="save"/>
+                         Save as Template
+                   </label>
+                </div>
+                <div class="col-md-4">
+                  <input type="text" class="form-control" name="template_name" id="template-name" placeholder="Template name" disabled/>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-primary pull-right" id="file-button" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Updating" >Add From File</button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -304,6 +325,15 @@ $(document).ready(function () {
   $('#csv-radio').on('click',function(){
     $('#rpm-selector').fadeOut();
   });
+
+  $('#template-radio').on('change',function(){
+    if($(this).prop('checked') === true){
+       $("#template-name").removeAttr("disabled");
+    }
+    else {
+      $("#template-name").attr("disabled", "disabled");
+    }
+});
 });
 </script>
 {% endblock javascript %}

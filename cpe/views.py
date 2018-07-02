@@ -56,14 +56,18 @@ def add_cpe(request):
                 return JsonResponse({"message": "Component not found","type":"danger"})
 
     elif 'file_location' in request.FILES:
+        if 'save_template' in request.POST:
+            template_name = request.POST['template_name']
+        else:
+            template_name = ''
         if request.POST["filetype"] == "csv":
             csv_file = TextIOWrapper(request.FILES['file_location'].file, encoding=request.encoding)
-            add_cpe_from_csv.delay(csv_file.read(),request.user.id)
+            add_cpe_from_csv.delay(csv_file.read(),request.user.id,template_name)
             return HttpResponse("Adding the components. Please Wait..")
         elif request.POST["filetype"] == "rpm":
             rpm_file = TextIOWrapper(request.FILES['file_location'].file, encoding=request.encoding)
             rpm_list = rpm_file.readlines()
-            add_rpm_from_file.delay(rpm_list,int(request.POST["server"]),request.user.id)
+            add_rpm_from_file.delay(rpm_list,int(request.POST["server"]),request.user.id,template_name)
             return HttpResponse("RPMs are bing added. Please wait.")
         else:
             return HttpResponse("Unknown Error occured!")

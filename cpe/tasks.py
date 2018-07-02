@@ -12,6 +12,7 @@ from cve.tasks import add_vulns
 from io import StringIO
 from notifications.models import notification
 from django.contrib.auth.models import User
+from cpe.models import template
 
 logger = get_task_logger(__name__)
 
@@ -26,8 +27,25 @@ def update_cpe_db():
     obj.update_db()
     logger.info("CPE update complete")
 
+def get_template(template_name,cur_user):
+    temp = None
+    user = User.objects.get(id=cur_user)
+    if template_name != '':
+        if template.objects.filter(name=template_name).exists():
+            num = 1
+            new_name = template_name + '(' + str(num) + ')'
+            while not template.objects.filter(new_name).exists():
+                count = count + 1
+                new_name = template_name + '(' + str(num) + ')'
+            temp = template(name='new_name',user=user)
+        else:
+            temp = template(name=template_name,user=user)
+        temp.save()
+    return temp
+
 @app.task
-def add_cpe_from_csv(csv_file,cur_user):
+def add_cpe_from_csv(csv_file,cur_user,template_name):
+    temp = get_template(template_name,cur_user)
     obj = cpe_handler()
     data = csv.reader(StringIO(csv_file))
     results = []
@@ -47,8 +65,12 @@ def add_cpe_from_csv(csv_file,cur_user):
                 if r[0] == 0:
                     i = [pro.name,ser.name,item,"NA","Not found"]
                 elif r[0] == -1:
+                    if temp is not None:
+                        obj.add_to_template(temp,item)
                     i = [pro.name,ser.name,item,r[1],"Already in DB"]
                 else:
+                    if temp is not None:
+                        obj.add_to_template(temp,item)
                     i = [pro.name,ser.name,item,r[1],"Added to DB"]
                     success.append([item,ser.id])
             else:
@@ -83,11 +105,16 @@ def add_rpm(rpm_name,server_id,cur_user):
         return [rpm_name,"NA","NA","No matching CPE found"]
 
 @app.task
-def chord_task(results,server_id,user_id):
+def chord_task(results,server_id,user_id,template_name):
+    temp = get_template(template_name,user_id)
+    obj = cpe_handler()
     args = []
     for item in results:
         if item[3] == "Added to DB" or item[3] == "Already in DB":
             args.append([item[1],server_id])
+            if temp is not None:
+                obj.add_to_template(temp,item[1])
+
     num = len(args)
     new_notif = notification(
         header=str(num) + " components have been added",
@@ -99,6 +126,5 @@ def chord_task(results,server_id,user_id):
     return results
 
 @app.task
-def add_rpm_from_file(rpm_list,server_id,user_id):
-    task = chord(add_rpm.s(item.replace("\n",""),server_id,user_id) for item in rpm_list)(chord_task.s(server_id,user_id))
-    print(task.id)
+def add_rpm_from_file(rpm_list,server_id,user_id,template_name):
+    task = chord(add_rpm.s(item.replace("\n",""),server_id,user_id) for item in rpm_list)(chord_task.s(server_id,user_id,template_name))
