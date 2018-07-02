@@ -2,14 +2,15 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .utils import cpe_handler
 from io import TextIOWrapper
-from .models import component,component_to_server
+from .models import component,component_to_server,template_to_cpe,template
 from products.models import server,product
 from django.db.models import F
 from django.http import JsonResponse,HttpResponse
-from .tasks import add_cpe_from_csv,add_rpm_from_file,add_rpm
+from .tasks import add_cpe_from_csv,add_rpm_from_file,add_rpm,update_cpe,cpe_chord_task
 from cve.tasks import add_vuln,vulns_added_notif
 from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
-from celery import chain
+from celery import chain,chord
+import json
 
 @login_required
 def index(request):
@@ -106,7 +107,8 @@ def get_table(request):
 @login_required
 def add_from_template(request):
     products = product.objects.filter(user=request.user)
-    return render(request,'cpe/add_from_template.html',{"products": products})
+    templates = template.objects.all()
+    return render(request,'cpe/add_from_template.html',{"products": products,"templates":templates})
 
 @login_required
 def autocomplete(request):
@@ -133,3 +135,58 @@ def autocomplete(request):
 
 
     return JsonResponse(response, safe=False)
+
+@login_required
+def get_components(request):
+    result = []
+    if 'server' in request.POST:
+        ser = None
+        if server.objects.filter(id=int(request.POST['server'])).exists():
+            ser = server.objects.get(id=int(request.POST['server']))
+        if ser is not None:
+            cpes = component_to_server.objects.filter(server = ser)
+            for item in cpes:
+                result.append({"id": item.id, "cpe": item.cpe.cpe_id, "title": item.cpe.title})
+    return JsonResponse(result, safe=False)
+
+@login_required
+def get_template(request):
+    result = []
+    if 'template' in request.POST:
+        if template_to_cpe.objects.filter(template__id=int(request.POST["template"])).exists():
+            for item in template_to_cpe.objects.filter(template__id=int(request.POST["template"])):
+                result.append({"cpe": item.cpe.cpe_id, "title": item.cpe.title})
+    return JsonResponse(result, safe=False)
+
+def save_template(request):
+    print("I'm here")
+    if 'template' in request.POST:
+        temp = None
+        new_name = request.POST['template']
+        if request.POST['template'] != '':
+            if template.objects.filter(name=request.POST['template']).exists():
+                num = 1
+                new_name = request.POST['template'] + '(' + str(num) + ')'
+                while not template.objects.filter(name=new_name).exists():
+                    num = num + 1
+                    new_name = request.POST['template'] + '(' + str(num) + ')'
+                temp = template(name='new_name',user=request.user)
+            else:
+                temp = template(name=request.POST['template'],user=request.user)
+            temp.save()
+        if temp is not None:
+            obj = cpe_handler()
+            table = json.loads(request.POST["table"])
+            for item in table:
+                obj.add_to_template(temp,item['cpe'])
+        return JsonResponse({"message": "Template " + new_name + " created!","type": "success"});
+
+    return JsonResponse({"message": "Uknown error occured!","type": "danger"});
+
+def save_components(request):
+    print(json.dumps(json.loads(request.POST['table']),indent=4))
+    #if 'server' in request.POST:
+        #table = json.loads(request.POST["table"])
+        #task = chord(update_cpe.s(int(item['id']),item['cpe'],int(request.POST['server']),int(request.POST['product']),request.user.id) for item in table)(cpe_chord_task.s(request.user.id,''))
+
+    return JsonResponse({"message": "Still coding this!","type": "info"});

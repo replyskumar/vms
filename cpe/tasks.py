@@ -34,8 +34,8 @@ def get_template(template_name,cur_user):
         if template.objects.filter(name=template_name).exists():
             num = 1
             new_name = template_name + '(' + str(num) + ')'
-            while not template.objects.filter(new_name).exists():
-                count = count + 1
+            while not template.objects.filter(name=new_name).exists():
+                num = num + 1
                 new_name = template_name + '(' + str(num) + ')'
             temp = template(name='new_name',user=user)
         else:
@@ -44,12 +44,71 @@ def get_template(template_name,cur_user):
     return temp
 
 @app.task
-def add_cpe_from_csv(csv_file,cur_user,template_name):
-    temp = get_template(template_name,cur_user)
+def add_cpe(item,server_id,product_id,cur_user):
+
+    if product_id == -1:
+        return ["NA","NA",item,"NA","Product not found"]
+    pro = product.objects.get(id=product_id,user=cur_user)
+    if server_id == -1:
+        return [pro.name,"NA",item,"NA","Server not found"]
+    ser = server.objects.get(id=server_id,product=pro)
+
     obj = cpe_handler()
-    data = csv.reader(StringIO(csv_file))
-    results = []
-    success = []
+    r = obj.add_cpe(item,server_id)
+    if r[0] == 0:
+        return [pro.name,ser.name,item,"NA","Not found"]
+    elif r[0] == -1:
+        return [pro.name,ser.name,item,r[1],"Already in DB",server_id]
+    else:
+        return [pro.name,ser.name,item,r[1],"Added to DB",server_id]
+
+@app.task
+def update_cpe(id,item,server_id,product_id,cur_user):
+
+    if product_id == -1:
+        return ["NA","NA",item,"NA","Product not found"]
+    pro = product.objects.get(id=product_id,user=cur_user)
+    if server_id == -1:
+        return [pro.name,"NA",item,"NA","Server not found"]
+    ser = server.objects.get(id=server_id,product=pro)
+
+    if id == 0:
+        obj = cpe_handler()
+        r = obj.add_cpe(item,server_id)
+        if r[0] == 0:
+            return [pro.name,ser.name,item,"NA","Not found"]
+        elif r[0] == -1:
+            return [pro.name,ser.name,item,r[1],"Already in DB",server_id]
+        else:
+            return [pro.name,ser.name,item,r[1],"Added to DB",server_id]
+    else:
+        c2s = component_to_server.objects.get(id=id)
+        cpe = c2s.cpe
+
+
+@app.task
+def cpe_chord_task(results,user_id,template_name):
+    obj = cpe_handler()
+    temp = get_template(template_name,user_id)
+    args = []
+    for item in results:
+        if item[4] == "Added to DB" or item[4] == "Already in DB":
+            args.append([item[2],item[5]])
+            if temp is not None:
+                obj.add_to_template(temp,item[2])
+
+    num = len(args)
+    new_notif = notification(
+        header=str(num) + " components have been added",
+        message= str(num) + " components have been added to the database",
+        user = User.objects.get(id=user_id),
+        read = False)
+    new_notif.save()
+    add_vulns.delay(args,user_id)
+    return results
+
+
+def yield_cpe_from_csv(data,cur_user):
     for row in data:
         ser = None
         pro = None
@@ -61,25 +120,19 @@ def add_cpe_from_csv(csv_file,cur_user,template_name):
             if item is '':
                 continue
             if ser is not None and pro is not None:
-                r = obj.add_cpe(item, ser.id)
-                if r[0] == 0:
-                    i = [pro.name,ser.name,item,"NA","Not found"]
-                elif r[0] == -1:
-                    if temp is not None:
-                        obj.add_to_template(temp,item)
-                    i = [pro.name,ser.name,item,r[1],"Already in DB"]
-                else:
-                    if temp is not None:
-                        obj.add_to_template(temp,item)
-                    i = [pro.name,ser.name,item,r[1],"Added to DB"]
-                    success.append([item,ser.id])
+                yield item, ser.id, pro.id
+            elif pro is None:
+                yield item, -1, -1
             else:
-                if pro is None:
-                    i = [row[0],row[1],item,"NA","Product not found"]
-                else:
-                    i = [pro.name,row[1],item,"NA","Server not found"]
-            results.append(i)
-    add_vulns.delay(success,cur_user)
+                yield item, -1, pro.id
+
+
+@app.task
+def add_cpe_from_csv(csv_file,cur_user,template_name=''):
+    temp = get_template(template_name,cur_user)
+    obj = cpe_handler()
+    data = csv.reader(StringIO(csv_file))
+    task = chord(add_cpe.s(item,ser_id,pro_id,cur_user) for item,ser_id,pro_id in yield_cpe_from_csv(data,cur_user))(cpe_chord_task.s(cur_user,template_name))
 
 @app.task
 def add_rpm(rpm_name,server_id,cur_user):
@@ -105,7 +158,7 @@ def add_rpm(rpm_name,server_id,cur_user):
         return [rpm_name,"NA","NA","No matching CPE found"]
 
 @app.task
-def chord_task(results,server_id,user_id,template_name):
+def rpm_chord_task(results,server_id,user_id,template_name=''):
     temp = get_template(template_name,user_id)
     obj = cpe_handler()
     args = []
@@ -126,5 +179,5 @@ def chord_task(results,server_id,user_id,template_name):
     return results
 
 @app.task
-def add_rpm_from_file(rpm_list,server_id,user_id,template_name):
-    task = chord(add_rpm.s(item.replace("\n",""),server_id,user_id) for item in rpm_list)(chord_task.s(server_id,user_id,template_name))
+def add_rpm_from_file(rpm_list,server_id,user_id,template_name=''):
+    task = chord(add_rpm.s(item.replace("\n",""),server_id,user_id) for item in rpm_list)(rpm_chord_task.s(server_id,user_id,template_name))

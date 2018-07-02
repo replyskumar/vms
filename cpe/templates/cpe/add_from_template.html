@@ -17,7 +17,7 @@ Add Multiple Components
     <div class="col-md-12">
       <div class="card">
         <div class="card-header" data-background-color="purple">
-            <h4 class="title">Add multiple components</h4>
+            <h4 class="title">Manage components</h4>
         </div>
         <div class="card-content">
           <div class="row">
@@ -38,6 +38,14 @@ Add Multiple Components
                   </div>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group label-floating ">
+                      <label >Save Template</label>
+                      <input id="template" type="text" class="form-control typeahead" placeholder="Template Name"/>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="col-md-3">
               <div class="row">
@@ -45,9 +53,14 @@ Add Multiple Components
                 <button id="fetch" class="btn btn-info" type="button">Fetch Components</button>
               </div>
               <div class="row">
-                <label>Add/Save Component</label><br>
+                <label>Add/Save Components</label><br>
                 <button id="add" class="btn btn-success" type="button">Add</button>
                 <button id="save" class="btn btn-success" type="button">Save</button>
+              </div>
+              <div class="row">
+                <label>Load/Save Templates</label><br>
+                <button id="load-template" class="btn btn-success" type="button">Load</button>
+                <button id="save-template" class="btn btn-success" type="button">Save</button>
               </div>
             </div>
             <div class="col-md-3">
@@ -74,6 +87,19 @@ Add Multiple Components
                   </ul>
                 </div>
               </div>
+              <div class="row">
+                <div class="dropdown" id="templates-dropdown">
+                  <label >Select Template</label><br>
+                  <button id="template-name" class="btn dropdown-toggle" type="button" data-toggle="dropdown">Select Template
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" id="template-dropdown-area">
+                    {% for i in templates %}
+                    <li><a href="#" id="{{i.id}}" value="{{i.name}}">{{i.name}}</a></li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -86,6 +112,7 @@ Add Multiple Components
         <div class="card-content">
           <table id="data-table" class="mdl-data-table">
             <thead>
+              <th>S.No</th>
               <th>Component</th>
               <th>CPE</th>
             </thead>
@@ -124,6 +151,8 @@ Add Multiple Components
 <form id="dropdown-form">
   {% csrf_token %}
   <input type='hidden' id="sel-pro" name='product'/>
+  <input type='hidden' id="sel-ser" name='server'/>
+  <input type='hidden' id="sel-temp" name='template'/>
 </form>
 
 {% endblock content%}
@@ -148,10 +177,18 @@ $(document).ready(function () {
     "paging": true,
     columnDefs: [
       {targets: '_all', className: 'mdl-data-table__cell--non-numeric text-center',render: $.fn.dataTable.render.ellipsis( 74)},
+      {targets: [0], searchable: false, orderable: false},
+      {targets: [3], searchable: false, orderable: false, visible: false}
     ],
   };
 
   var table = $('#data-table').DataTable(tableOptions);
+
+  table.on( 'draw', function () {
+        table.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+            cell.innerHTML = i+1;
+        } );
+    } ).draw();
 
   var components = new Bloodhound({
     datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
@@ -183,8 +220,7 @@ $(document).ready(function () {
       showNotification('bottom','right','Select a component first!','danger');
       return;
     }
-    var newRow = table.row.add([$('#cpe-name').val(),$('#cpe').val()]).draw(false).node();
-    $(newRow).attr('id','0');
+    table.row.add(['',$('#cpe-name').val(),$('#cpe').val(),'0']).draw(false).node();
     $('#cpe').val('');
     $('#cpe-name').val('');
   });
@@ -206,11 +242,10 @@ $(document).ready(function () {
   });
 
   $("#products-dropdown a").click(function(){
-    $('#selected-product').val($(this).attr('id'));
     $('#sel-pro').val($(this).attr('id'));
     $('#product-name').html($(this).attr('value')+' <span class="caret"></span>');
     $('#server-name').html('Select Server <span class="caret"></span>');
-    $('#selected-server').val('');
+    $('#sel-ser').val('');
     $.ajax({
       url : '{% url "components:get_dropdown" %}',
       type: "POST",
@@ -223,9 +258,131 @@ $(document).ready(function () {
       }
     });
   });
+
   $('body').on('click', '#servers-dropdown a', function (){
+    $('#sel-ser').val($(this).attr('id'));
     $('#server-name').html($(this).attr('value')+' <span class="caret"></span>');
   });
+
+  $('#fetch').on('click',function(){
+    if($('#sel-ser').val() === '')
+      showNotification('bottom','right','Select a server first!','danger');
+    else{
+      $.ajax({
+        url : '{% url "components:get_components" %}',
+        type: "POST",
+        data: $('#dropdown-form').serialize(),
+        success: function (data) {
+          if(!$.trim(data))
+            showNotification('bottom','right','No components in the specified server','warning');
+          data.forEach(function (item) {
+            var rows = table.rows().data();
+            rows.each(function (value, index) {
+              if(value[2] === item.cpe)
+              {
+                table.row(index).remove();
+                return false;
+              }
+            });
+            table.row.add(['',item.title,item.cpe,item.id]).draw(false).node();
+          });
+        },
+        error: function (jXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+        }
+      });
+    }
+  });
+
+  $("#templates-dropdown a").click(function(){
+    $('#sel-temp').val($(this).attr('id'));
+    $('#template-name').html($(this).attr('value')+' <span class="caret"></span>');
+  });
+
+  $('#load-template').on('click',function(){
+    if($('#sel-temp').val() === '')
+      showNotification('bottom','right','Select a template first!','warning');
+    else{
+      $.ajax({
+        url : '{% url "components:get_template" %}',
+        type: "POST",
+        data: $('#dropdown-form').serialize(),
+        success: function (data) {
+          if(!$.trim(data))
+            showNotification('bottom','right','Error occured!','warning');
+          data.forEach(function (item) {
+            var rows = table.rows().data();
+            var flag = false;
+            rows.each(function (value, index) {
+              if(value[2] === item.cpe)
+              {
+                flag = true;
+                return false;
+              }
+            });
+            if(!flag)
+              var newRow = table.row.add(['',item.title,item.cpe,'0']).draw(false).node();
+          });
+        },
+        error: function (jXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+        }
+      });
+    }
+  });
+
+  $('#save-template').on('click',function(){
+    if($('#template').val() === '')
+    {
+      showNotification('bottom','right','Enter a template name!','warning');
+      return;
+    }
+    if(!table.data().any())
+    {
+      showNotification('bottom','right','Table empty!','warning');
+      return;
+    }
+    var tableData = JSON.stringify(getTableData(table));
+    $.ajax({
+      url : '{% url "components:save_template" %}',
+      type: "POST",
+      data: {"table": tableData, "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),'template': $('#template').val()},
+      success: function (data) {
+        showNotification('bottom','right',data.message,data.type);
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+      }
+    });
+
+  });
+
+  $('#save').on('click',function(){
+    if($('#sel-ser').val() === '')
+    {
+      showNotification('bottom','right','Select valid product and server!','warning');
+      return;
+    }
+    if(!table.data().any())
+    {
+      showNotification('bottom','right','Table empty!','warning');
+      return;
+    }
+    var tableData = JSON.stringify(getTableData(table));
+    $.ajax({
+      url : '{% url "components:save_components" %}',
+      type: "POST",
+      data: {"table": tableData, "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),'server': $('#sel-ser').val()},
+      success: function (data) {
+        showNotification('bottom','right',data.message,data.type);
+      },
+      error: function (jXHR, textStatus, errorThrown) {
+        alert(errorThrown);
+      }
+    });
+
+  });
+
 });
 </script>
 {% endblock javascript %}

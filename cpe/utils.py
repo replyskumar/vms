@@ -219,8 +219,7 @@ class cpe_handler:
             return [-2,'db']
         return list_items
 
-
-    def add_cpe(self, uri, server_id):
+    def get_cpe(self, uri, server_id):
         obj = None
         if component.objects.filter(cpe_id=uri).exists():
             obj = component.objects.get(cpe_id=uri)
@@ -248,8 +247,15 @@ class cpe_handler:
                         obj = component(cpe_id=item.name,title=item.title,wfs=item.wfs)
                     elif item.wfs == uri:
                         obj = component(cpe_id=item.name,title=item.title,wfs=item.wfs)
+        return obj
+
+    def add_cpe(self, uri, server_id):
+        obj = self.get_cpe(uri, server_id)
+
         if obj is None:
             return [0]
+        elif not isinstance(obj,component):
+            return obj
         obj.save()
         ser = server.objects.get(id=server_id)
         if component_to_server.objects.filter(cpe=obj, server=ser).exists():
