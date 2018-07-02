@@ -87,3 +87,15 @@ jQuery.fn.dataTable.render.ellipsis = function ( cutoff, wordbreak, escapeHtml )
 		return '<span class="ellipsis" title="'+esc(d)+'">'+shortened+'&#8230;</span>';
 	};
 };
+
+function getTableData(table){
+	tableData = [];
+	var rows = table.rows().data();
+	rows.each(function (value, index) {
+		tableData.push({
+				"id": value[3],
+				"cpe": value[2]
+		});
+	});
+	return tableData
+}
