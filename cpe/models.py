@@ -2,6 +2,7 @@ from django.db import models
 from products.models import server
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.models import User
 
 class component(models.Model):
 
@@ -23,6 +24,7 @@ class component_to_server(models.Model):
 class template(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255,blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now=True)
 
 class template_to_cpe(models.Model):
