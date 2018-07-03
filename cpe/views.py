@@ -38,7 +38,7 @@ def add_cpe(request):
             elif r[0] ==-2:
                 return JsonResponse({"message": "Unknown error occured","type":"danger"})
             else:
-                chain(add_vuln.si([request.POST['cpe'],int(request.POST['server'])]),vulns_added_notif.si(1,request.user.id))()
+                task_id = chain(add_vuln.si([request.POST['cpe'],int(request.POST['server'])]),vulns_added_notif.si(1,request.user.id))()
                 return JsonResponse({"message": "Component added successfully!","type":"success"})
         else:
             r = add_rpm(request.POST['cpe'],int(request.POST['server']),request.user)
@@ -49,7 +49,7 @@ def add_cpe(request):
             elif r[3] == "Unknown error occured":
                 return JsonResponse({"message": r[3],"type":"danger"})
             elif r[3] == "Added to DB":
-                chain(add_vuln.si([r[1],int(request.POST['server'])]),vulns_added_notif.si(1,request.user.id))()
+                task_id = chain(add_vuln.si([r[1],int(request.POST['server'])]),vulns_added_notif.si(1,request.user.id))()
                 return JsonResponse({"message": "Component added successfully!","type":"success"})
             elif r[3] == "Multiple matches found":
                 return JsonResponse({"message": r[3],"type":"warning"})
@@ -63,12 +63,12 @@ def add_cpe(request):
             template_name = ''
         if request.POST["filetype"] == "csv":
             csv_file = TextIOWrapper(request.FILES['file_location'].file, encoding=request.encoding)
-            add_cpe_from_csv.delay(csv_file.read(),request.user.id,template_name)
+            task_id = add_cpe_from_csv.delay(csv_file.read(),request.user.id,template_name)
             return HttpResponse("Adding the components. Please Wait..")
         elif request.POST["filetype"] == "rpm":
             rpm_file = TextIOWrapper(request.FILES['file_location'].file, encoding=request.encoding)
             rpm_list = rpm_file.readlines()
-            add_rpm_from_file.delay(rpm_list,int(request.POST["server"]),request.user.id,template_name)
+            task_id = add_rpm_from_file.delay(rpm_list,int(request.POST["server"]),request.user.id,template_name)
             return HttpResponse("RPMs are bing added. Please wait.")
         else:
             return HttpResponse("Unknown Error occured!")
@@ -176,5 +176,5 @@ def save_components(request):
     if 'server' in request.POST:
         table = json.loads(request.POST["table"])
         print(table)
-        save_comp.delay(int(request.POST['product']),int(request.POST['server']),table,request.user.id)
+        task_id = save_comp.delay(int(request.POST['product']),int(request.POST['server']),table,request.user.id)
     return JsonResponse({"message": "Still coding this!","type": "info"});
