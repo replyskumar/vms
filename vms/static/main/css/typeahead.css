@@ -110,7 +110,7 @@ p + p {
   border-bottom: 1px solid #ccc;
 }
 
-#autocomplete .tt-menu {
+.tt-menu {
   max-height: 150px;
   overflow-y: auto;
 }
