@@ -22,7 +22,6 @@ INSTALLED_APPS = [
     'cpe',
     'cve',
     'products',
-    'django_celery_results',
 ]
 
 MIDDLEWARE = [
