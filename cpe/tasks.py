@@ -12,6 +12,8 @@ from cve.tasks import add_vulns
 from io import StringIO
 from notifications.models import notification
 from django.contrib.auth.models import User
+from cpe.models import component_to_server
+from cve.models import affects
 
 logger = get_task_logger(__name__)
 
@@ -45,6 +47,11 @@ def add_cpe(item,server_id,product_id,cur_user):
     else:
         return [pro.name,ser.name,item,r[1],"Added to DB",server_id]
 
+
+@app.task
+def save_components(product_id,server_id,table,cur_user):
+    task = chord(update_cpe.s(int(item['id']),item['cpe'],server_id,product_id,cur_user) for item in table)(cpe_chord_task.s(cur_user,''))
+
 @app.task
 def update_cpe(id,item,server_id,product_id,cur_user):
 
@@ -55,8 +62,8 @@ def update_cpe(id,item,server_id,product_id,cur_user):
         return [pro.name,"NA",item,"NA","Server not found"]
     ser = server.objects.get(id=server_id,product=pro)
 
+    obj = cpe_handler()
     if id == 0:
-        obj = cpe_handler()
         r = obj.add_cpe(item,server_id)
         if r[0] == 0:
             return [pro.name,ser.name,item,"NA","Not found"]
@@ -67,6 +74,21 @@ def update_cpe(id,item,server_id,product_id,cur_user):
     else:
         c2s = component_to_server.objects.get(id=id)
         cpe = c2s.cpe
+        if cpe.cpe_id == item:
+            return [pro.name,ser.name,item,cpe.title,"No changes!"]
+        else:
+            new_cpe = obj.get_cpe(item)
+            if new_cpe is None:
+                return [pro.name,ser.name,item,"NA","Not found"]
+            elif new_cpe is [2]:
+                return [pro.name,ser.name,item,"NA","DB Error"]
+            cpe.cpe_id = new_cpe.cpe_id
+            cpe.wfs = new_cpe.wfs
+            cpe.title = new_cpe.title
+            cpe.save()
+            if affects.objects.filter(c2s=c2s).exists():
+                affects.objects.filter(c2s=c2s).delete()
+            return [pro.name,ser.name,item,cpe.title,"CPE Updated",server_id]
 
 
 @app.task
@@ -75,15 +97,15 @@ def cpe_chord_task(results,user_id,template_name):
     temp = get_template(template_name,user_id)
     args = []
     for item in results:
-        if item[4] == "Added to DB" or item[4] == "Already in DB":
+        if item[4] == "Added to DB" or item[4] == "Already in DB" or item[4] == "CPE Updated":
             args.append([item[2],item[5]])
             if temp is not None:
                 add_to_template(temp,item[2])
 
     num = len(args)
     new_notif = notification(
-        header=str(num) + " components have been added",
-        message= str(num) + " components have been added to the database",
+        header=str(num) + " components have been added/updated",
+        message= str(num) + " components have been added/updated in the database",
         user = User.objects.get(id=user_id),
         read = False)
     new_notif.save()

@@ -372,7 +372,7 @@ $(document).ready(function () {
     $.ajax({
       url : '{% url "components:save_components" %}',
       type: "POST",
-      data: {"table": tableData, "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),'server': $('#sel-ser').val()},
+      data: {"table": tableData, "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),"server": $('#sel-ser').val(),"product": $('#sel-pro').val()},
       success: function (data) {
         showNotification('bottom','right',data.message,data.type);
       },

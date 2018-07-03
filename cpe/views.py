@@ -6,7 +6,7 @@ from .models import component,component_to_server,template_to_cpe,template
 from products.models import server,product
 from django.db.models import F
 from django.http import JsonResponse,HttpResponse
-from .tasks import add_cpe_from_csv,add_rpm_from_file,add_rpm,update_cpe,cpe_chord_task
+from .tasks import add_cpe_from_csv,add_rpm_from_file,add_rpm, save_components as save_comp
 from cve.tasks import add_vuln,vulns_added_notif
 from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
 from celery import chain,chord
@@ -173,9 +173,8 @@ def save_template(request):
 
 @login_required
 def save_components(request):
-    print(json.dumps(json.loads(request.POST['table']),indent=4))
-    #if 'server' in request.POST:
-        #table = json.loads(request.POST["table"])
-        #task = chord(update_cpe.s(int(item['id']),item['cpe'],int(request.POST['server']),int(request.POST['product']),request.user.id) for item in table)(cpe_chord_task.s(request.user.id,''))
-
+    if 'server' in request.POST:
+        table = json.loads(request.POST["table"])
+        print(table)
+        save_comp.delay(int(request.POST['product']),int(request.POST['server']),table,request.user.id)
     return JsonResponse({"message": "Still coding this!","type": "info"});
