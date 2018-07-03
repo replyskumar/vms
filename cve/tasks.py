@@ -90,12 +90,11 @@ def get_modifications():
                             affects.objects.filter(id=rel.id).delete()
         else:
             for comp in item.affected:
-                if comp[0] is True:
-                    if component.objects.filter(cpe_id__contains=comp[1]).exists():
+                if comp['vuln'] is True:
+                    if component.objects.filter(cpe_id__contains=comp['cpe22']).exists():
                         temp.save()
-                        for c2s in component_to_server.objects.filter(cpe__cpe_id__contains=comp[1]):
-                            if comp[3] is not '':
-                                if match_cpe(c2s.cpe.cpe_id,comp['cpe22'],comp):
-                                    if affects.objects.filter(c2s=c2s,cve=temp,server=c2s.server,custom_score=0).exists() is not True:
-                                        rel = affects(c2s=c2s,cve=temp,server=c2s.server,custom_score=0)
-                                        rel.save()
+                        for c2s in component_to_server.objects.filter(cpe__cpe_id__contains=comp['cpe22']):
+                            if match_cpe(c2s.cpe.cpe_id,comp['cpe22'],comp):
+                                if not affects.objects.filter(c2s=c2s,cve=temp,server=c2s.server).exists():
+                                    rel = affects(c2s=c2s,cve=temp,server=c2s.server,custom_score=0)
+                                    rel.save()

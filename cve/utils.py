@@ -250,8 +250,9 @@ class cve_handler:
                 else:
                     cpe_item = component.objects.get(wfs=cpe_name)
                 c2s = component_to_server.objects.get(server=ser,cpe=cpe_item)
-                rel = affects(cve=item.cve,c2s=c2s,custom_score=0,server=ser)
-                rel.save()
+                if not affects.objects.filter(cve=item.cve,c2s=c2s,server=ser).exists():
+                    rel = affects(cve=item.cve,c2s=c2s,custom_score=0,server=ser)
+                    rel.save()
         else:
             if USE_ELASTIC_SEARCH:
                 if 'cpe:2.3' in cpe_name:
@@ -302,8 +303,9 @@ class cve_handler:
                                 return
                             if server.objects.filter(id=ser_id).exists():
                                 c2s = component_to_server.objects.get(server=ser,cpe=cpe_item)
-                                rel = affects(cve=vuln,c2s=c2s,custom_score=0,server=ser)
-                                rel.save()
+                                if not affects.objects.filter(cve=vuln,c2s=c2s,server=ser).exists():
+                                    rel = affects(cve=vuln,c2s=c2s,custom_score=0,server=ser)
+                                    rel.save()
             else:
                 for year in range(2002,datetime.now().year+1):
                     try:
@@ -336,5 +338,6 @@ class cve_handler:
                                     return
                                 if server.objects.filter(id=ser_id).exists():
                                     c2s = component_to_server.objects.get(server=ser,cpe=cpe_item)
-                                    rel = affects(cve=vuln,c2s=c2s,custom_score=0,server=ser)
-                                    rel.save()
+                                    if not affects.objects.filter(cve=vuln,c2s=c2s,server=ser).exists():
+                                        rel = affects(cve=vuln,c2s=c2s,custom_score=0,server=ser)
+                                        rel.save()
