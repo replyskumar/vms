@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .utils import cpe_handler
+from .utils import cpe_handler, add_to_template, get_template as get_template_obj
 from io import TextIOWrapper
 from .models import component,component_to_server,template_to_cpe,template
 from products.models import server,product
@@ -158,31 +158,20 @@ def get_template(request):
                 result.append({"cpe": item.cpe.cpe_id, "title": item.cpe.title})
     return JsonResponse(result, safe=False)
 
+@login_required
 def save_template(request):
-    print("I'm here")
     if 'template' in request.POST:
-        temp = None
-        new_name = request.POST['template']
-        if request.POST['template'] != '':
-            if template.objects.filter(name=request.POST['template']).exists():
-                num = 1
-                new_name = request.POST['template'] + '(' + str(num) + ')'
-                while not template.objects.filter(name=new_name).exists():
-                    num = num + 1
-                    new_name = request.POST['template'] + '(' + str(num) + ')'
-                temp = template(name='new_name',user=request.user)
-            else:
-                temp = template(name=request.POST['template'],user=request.user)
-            temp.save()
+        temp = get_template_obj(request.POST['template'],request.user.id)
         if temp is not None:
             obj = cpe_handler()
             table = json.loads(request.POST["table"])
             for item in table:
-                obj.add_to_template(temp,item['cpe'])
-        return JsonResponse({"message": "Template " + new_name + " created!","type": "success"});
+                add_to_template(temp,item['cpe'])
+        return JsonResponse({"message": "Template " + temp.name + " created!","type": "success"});
 
     return JsonResponse({"message": "Uknown error occured!","type": "danger"});
 
+@login_required
 def save_components(request):
     print(json.dumps(json.loads(request.POST['table']),indent=4))
     #if 'server' in request.POST:

@@ -16,6 +16,7 @@ from cve.tasks import add_vuln
 import re
 from vms.settings import USE_ELASTIC_SEARCH, ELASTIC_SEARCH_URL
 from pkg_resources import parse_version
+from django.contrib.auth.models import User
 
 FEED_URL = 'http://nvd.nist.gov/feeds/xml/cpe/dictionary/'
 
@@ -219,7 +220,7 @@ class cpe_handler:
             return [-2,'db']
         return list_items
 
-    def get_cpe(self, uri, server_id):
+    def get_cpe(self, uri):
         obj = None
         if component.objects.filter(cpe_id=uri).exists():
             obj = component.objects.get(cpe_id=uri)
@@ -250,7 +251,7 @@ class cpe_handler:
         return obj
 
     def add_cpe(self, uri, server_id):
-        obj = self.get_cpe(uri, server_id)
+        obj = self.get_cpe(uri)
 
         if obj is None:
             return [0]
@@ -264,17 +265,6 @@ class cpe_handler:
         new_comp.save()
         return [1,obj.title,]
 
-    def add_to_template(self,temp,cpe_id):
-        if component.objects.filter(cpe_id=cpe_id).exists():
-            cpe = component.objects.get(cpe_id=cpe_id)
-        elif component.objects.filter(wfs=cpe_id).exists():
-            cpe = component.objects.get(wfs=cpe_id)
-        else:
-            return -1
-        if not template_to_cpe.objects.filter(template=temp,cpe=cpe).exists():
-            t2c  = template_to_cpe(template=temp,cpe=cpe)
-            t2c.save()
-        return 1
 
 class Rpm:
 
@@ -345,3 +335,34 @@ class Rpm:
             return partial_match
         else:
             return exact_match
+
+def get_template(template_name,cur_user):
+    temp = None
+    user = User.objects.get(id=cur_user)
+    if template_name != '':
+        if template.objects.filter(name=template_name).exists():
+            num = 1
+            new_name = template_name + '(' + str(num) + ')'
+            while template.objects.filter(name=new_name).exists():
+                num = num + 1
+                new_name = template_name + '(' + str(num) + ')'
+            temp = template(name=new_name,user=user)
+        else:
+            temp = template(name=template_name,user=user)
+        temp.save()
+    return temp
+
+def add_to_template(temp,cpe_id):
+    if component.objects.filter(cpe_id=cpe_id).exists():
+        cpe = component.objects.get(cpe_id=cpe_id)
+    elif component.objects.filter(wfs=cpe_id).exists():
+        cpe = component.objects.get(wfs=cpe_id)
+    else:
+        obj = cpe_handler()
+        cpe = obj.get_cpe(cpe_id)
+        if cpe is not None and cpe is not [-2]:
+            cpe.save()
+    if not template_to_cpe.objects.filter(template=temp,cpe=cpe).exists():
+        t2c  = template_to_cpe(template=temp,cpe=cpe)
+        t2c.save()
+    return 1

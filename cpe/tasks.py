@@ -4,7 +4,7 @@ from celery.task.schedules import crontab
 from celery import chord
 from celery.decorators import periodic_task
 from celery.utils.log import get_task_logger
-from .utils import cpe_handler, Rpm
+from .utils import cpe_handler, Rpm, add_to_template,get_template
 import datetime
 from products.models import product,server
 import csv
@@ -12,7 +12,6 @@ from cve.tasks import add_vulns
 from io import StringIO
 from notifications.models import notification
 from django.contrib.auth.models import User
-from cpe.models import template
 
 logger = get_task_logger(__name__)
 
@@ -26,22 +25,6 @@ def update_cpe_db():
     obj = cpe_handler()
     obj.update_db()
     logger.info("CPE update complete")
-
-def get_template(template_name,cur_user):
-    temp = None
-    user = User.objects.get(id=cur_user)
-    if template_name != '':
-        if template.objects.filter(name=template_name).exists():
-            num = 1
-            new_name = template_name + '(' + str(num) + ')'
-            while not template.objects.filter(name=new_name).exists():
-                num = num + 1
-                new_name = template_name + '(' + str(num) + ')'
-            temp = template(name='new_name',user=user)
-        else:
-            temp = template(name=template_name,user=user)
-        temp.save()
-    return temp
 
 @app.task
 def add_cpe(item,server_id,product_id,cur_user):
@@ -95,7 +78,7 @@ def cpe_chord_task(results,user_id,template_name):
         if item[4] == "Added to DB" or item[4] == "Already in DB":
             args.append([item[2],item[5]])
             if temp is not None:
-                obj.add_to_template(temp,item[2])
+                add_to_template(temp,item[2])
 
     num = len(args)
     new_notif = notification(
@@ -128,8 +111,7 @@ def yield_cpe_from_csv(data,cur_user):
 
 
 @app.task
-def add_cpe_from_csv(csv_file,cur_user,template_name=''):
-    temp = get_template(template_name,cur_user)
+def add_cpe_from_csv(csv_file,cur_user,template_name):
     obj = cpe_handler()
     data = csv.reader(StringIO(csv_file))
     task = chord(add_cpe.s(item,ser_id,pro_id,cur_user) for item,ser_id,pro_id in yield_cpe_from_csv(data,cur_user))(cpe_chord_task.s(cur_user,template_name))
@@ -166,7 +148,7 @@ def rpm_chord_task(results,server_id,user_id,template_name=''):
         if item[3] == "Added to DB" or item[3] == "Already in DB":
             args.append([item[1],server_id])
             if temp is not None:
-                obj.add_to_template(temp,item[1])
+                add_to_template(temp,item[1])
 
     num = len(args)
     new_notif = notification(
