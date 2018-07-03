@@ -130,19 +130,35 @@ Add Multiple Components
     <div class="modal-content" id="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="modal-title">Loading..</h4>
+        <h4 class="modal-title" id="modal-title">Edit Component</h4>
       </div>
       <div class="modal-body" id="modal-body">
         <div class="row">
-          <input id="edit-cpe-name" type="text" class="form-control typeahead"/>
+          <div class="col-md-6">
+            <div class="form-group label-floating ">
+                <label >Component</label>
+                <input id="edit-cpe-name" type="text" class="form-control" disabled/>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group label-floating">
+                <label >Version</label>
+                <div id="version-drop"></div>
+            </div>
+          </div>
         </div>
         <div class="row">
-          <input id="edit-cpe" type="text" class="form-control" disabled />
+          <div class="col-md-6">
+            <div class="form-group label-floating ">
+              <label >CPE</label>
+              <input id="edit-cpe" type="text" class="form-control" disabled />
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <button id="save-edits" type="button" class="btn btn-primary">Save changes</button>
       </div>
     </div>
   </div>
@@ -191,7 +207,7 @@ $(document).ready(function () {
     } ).draw();
 
   var components = new Bloodhound({
-    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
     queryTokenizer: Bloodhound.tokenizers.whitespace,
     remote: {
       url: "{% url 'components:autocomplete' %}?searchall=%QUERY",
@@ -206,7 +222,7 @@ $(document).ready(function () {
     source: components
   });
 
-  $('.typeahead').on('typeahead:selected', function(evt, item) {
+  $('#cpe-name').on('typeahead:selected', function(evt, item) {
     $('#cpe').val(item.cpe);
   });
 
@@ -220,25 +236,85 @@ $(document).ready(function () {
       showNotification('bottom','right','Select a component first!','danger');
       return;
     }
-    table.row.add(['',$('#cpe-name').val(),$('#cpe').val(),'0']).draw(false).node();
+    var newRow = table.row.add(['',$('#cpe-name').val(),$('#cpe').val(),'0']).draw(false).node();
+    $(newRow).attr('data-toggle','modal');
+    $(newRow).attr('data-target','#editModal');
     $('#cpe').val('');
     $('#cpe-name').val('');
   });
 
-  var triggerItem;
+  var triggerRow,currentRow;
 
   $('#editModal').modal({
       keyboard: true,
       backdrop: "static",
       show:false,
     }).on('shown.bs.modal', function(e){
-      triggerItem = $(e.relatedTarget);
-      alert(triggerItem);
+      triggerRow = $(e.relatedTarget);
+      currentRow = table.row(triggerRow).data();
+      $('#edit-cpe-name').val(currentRow[1]);
+      $('#edit-cpe').val(currentRow[2]);
+      $('#edit-cpe-name').attr('placeholder',currentRow[1]);
+      $('#edit-cpe').attr('placeholder',currentRow[2]);
+
+      $('#version-drop').html('<input id="edit-version" type="text" class="form-control typeahead"/>');
+
+      $.ajax({
+        url : '{% url "components:get_versions" %}',
+        type: "POST",
+        data: {cpe: currentRow[2], csrfmiddlewaretoken: $("[name=csrfmiddlewaretoken]").val()},
+        success: function (data) {
+
+          var versions = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('version'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            local: data
+          });
+
+          $('#version-drop .typeahead').typeahead(null, {
+            name: 'versions',
+            display: 'version',
+            limit: '100',
+            minLength: 0,
+            source: versions
+          });
+
+          $('#edit-version').val(currentRow[2].split(":")[4]);
+          $('#edit-version').attr('placeholder',currentRow[2].split(":")[4]);
+
+          $('body').on('typeahead:selected','#edit-version',function(evt, item){
+            $('#edit-cpe-name').val(item.name);
+            $('#edit-cpe').val(item.cpe);
+          });
+
+          $('body').on('input','#edit-version',function(){
+            $('#edit-cpe-name').val('');
+            $('#edit-cpe').val('');
+          });
+
+        },
+        error: function (jXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+        }
+      });
 
   });
 
-  $('body').on('hidden.bs.modal','#detailModal',function(){
-    alert("hidden");
+  $('body').on('hidden.bs.modal','#editModal',function(){
+    $('#version-drop').html('');
+    $('#edit-cpe-name').val('');
+    $('#edit-cpe').val('');
+  });
+
+  $('#save-edits').on('click',function(){
+    if($('#edit-cpe').val() === '' || $('#edit-cpe-name').val() === '')
+    {
+      showNotification('bottom','right','Select a valid version of the component!','warning');
+      return;
+    }
+    table.row(triggerRow).data(['',$('#edit-cpe-name').val(),$('#edit-cpe').val(),currentRow[3]]).draw();
+    $('#editModal').modal('hide');
+    showNotification('bottom','right','Changes added!','success');
   });
 
   $("#products-dropdown a").click(function(){
@@ -275,17 +351,21 @@ $(document).ready(function () {
         success: function (data) {
           if(!$.trim(data))
             showNotification('bottom','right','No components in the specified server','warning');
-          data.forEach(function (item) {
-            var rows = table.rows().data();
-            rows.each(function (value, index) {
-              if(value[2] === item.cpe)
-              {
-                table.row(index).remove();
-                return false;
-              }
+          else {
+            data.forEach(function (item) {
+              var rows = table.rows().data();
+              rows.each(function (value, index) {
+                if(value[2] === item.cpe)
+                {
+                  table.row(index).remove();
+                  return false;
+                }
+              });
+              var newRow = table.row.add(['',item.title,item.cpe,item.id]).draw(false).node();
+              $(newRow).attr('data-toggle','modal');
+              $(newRow).attr('data-target','#editModal');
             });
-            table.row.add(['',item.title,item.cpe,item.id]).draw(false).node();
-          });
+          }
         },
         error: function (jXHR, textStatus, errorThrown) {
           alert(errorThrown);
@@ -320,8 +400,11 @@ $(document).ready(function () {
                 return false;
               }
             });
-            if(!flag)
+            if(!flag){
               var newRow = table.row.add(['',item.title,item.cpe,'0']).draw(false).node();
+              $(newRow).attr('data-toggle','modal');
+              $(newRow).attr('data-target','#editModal');
+            }
           });
         },
         error: function (jXHR, textStatus, errorThrown) {

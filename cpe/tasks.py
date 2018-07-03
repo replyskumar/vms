@@ -77,6 +77,8 @@ def update_cpe(id,item,server_id,product_id,cur_user):
     ser = server.objects.get(id=server_id,product=pro)
 
     obj = cpe_handler()
+    if id != 0 and not component_to_server.objects.filter(id=id).exists():
+        id = 0
     if id == 0:
         r = obj.add_cpe(item,server_id)
         if r[0] == 0:

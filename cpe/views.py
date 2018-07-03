@@ -177,4 +177,24 @@ def save_components(request):
         table = json.loads(request.POST["table"])
         print(table)
         task_id = save_comp.delay(int(request.POST['product']),int(request.POST['server']),table,request.user.id)
-    return JsonResponse({"message": "Still coding this!","type": "info"});
+    return JsonResponse({"message": "Components are being added!","type": "info"});
+
+@login_required
+def get_versions(request):
+    print(request.POST)
+    if 'cpe' in request.POST:
+        try:
+            cpe_start = ':'.join(request.POST['cpe'].split(':')[:4])
+        except:
+            return HttpResponse('')
+        version_list = []
+        if 1==2: #elasticsearch part to do
+            pass
+        else:
+            obj = cpe_handler()
+            res = obj.get_all_cpe()
+            for item in res:
+                if item.startswith(cpe_start):
+                    version_list.append({"version": item.split(':')[4],"cpe": item, "name": res[item]})
+            return JsonResponse(version_list,safe=False)
+    return HttpResponse('')
