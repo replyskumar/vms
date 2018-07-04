@@ -3,7 +3,7 @@ from vms.celery import app
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 from celery.utils.log import get_task_logger
-from celery import chord
+from celery import chord,group,chain
 from .utils import cve_handler,CACHE_PATH,match_cpe
 import datetime
 from notifications.models import notification
@@ -45,15 +45,22 @@ def update_cve_db_year(year):
     logger.info("CVE db of " + str(year) + " updated")
 
 @periodic_task(
-    run_every=crontab(minute=34, hour=9),
+    run_every=crontab(minute=0, hour=0),
     name="CVE DB update",
     ignore_result=True
 )
 def update_cve_db():
     now = datetime.datetime.now()
     tasks = []
-    for year in range(2002,int(now.year) + 1):
-        tasks.append(update_cve_db_year.delay(str(year)))
+    task = chain(update_cve_db_year.si(str(year)) for year in range(2002,int(now.year) + 1))()
+
+@periodic_task(
+    run_every=crontab(minute=0, hour=0),
+    name="CVE daily update",
+    ignore_result=True
+)
+def get_daily_update():
+    task = chain(update_cve_db_year.si('modified'),get_modifications.si())()
 
 @app.task
 def get_modifications():

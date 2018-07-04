@@ -32,7 +32,7 @@ Return Codes:
 """
 
 @periodic_task(
-    run_every=crontab(minute=59, hour=15),
+    run_every=crontab(minute=0, hour=0),
     name="CPE DB update",
     ignore_result=True
 )
