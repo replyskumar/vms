@@ -91,3 +91,4 @@ cache/
 celerybeat*
 staticfiles/
 *.rdb
+backups
