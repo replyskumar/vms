@@ -6,13 +6,16 @@ python:
 services:
 - mysql
 install:
-- pip install -q -r requirements.txt
+- pip install -q -r web/requirements.txt
 before_script:
+- cd ./web
 - mysql -u root -e 'CREATE DATABASE vms;'
 - python manage.py makemigrations --noinput
 - python manage.py migrate --noinput
 script:
 - python manage.py test
+before_deploy:
+  - cd ./web
 deploy:
   provider: heroku
   api_key:
