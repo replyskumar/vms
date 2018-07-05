@@ -277,7 +277,7 @@ class cve_handler:
                         }
                     }
                 }
-                res = self.es.search(index=["cve-"+str(year) for year in range(2002,datetime.now().year+1)],body=query,size=10000)
+                res = self.es.search(index=["cve-"+str(year) for year in range(2002,datetime.now().year+1)],body=query,size=10000,request_timeout=60)
                 for item in res["hits"]["hits"]:
                     for comp in item["_source"]["affected"]:
                         if ((match_cpe(cpe_name,comp['cpe22'],comp) or match_cpe(cpe_name,comp['cpe23'],comp)) and comp['vuln']) is True:

@@ -230,11 +230,11 @@ class cpe_handler:
             if USE_ELASTIC_SEARCH:
                 query1 = {"query" : {"constant_score" : {"filter" : {"term" : {"cpe_id" : uri}}}}}
                 query2 = {"query" : {"constant_score" : {"filter" : {"term" : {"wfs" : uri}}}}}
-                res1 = self.es.search(index="cpe-names",body=query1)
+                res1 = self.es.search(index="cpe-names",body=query1,request_timeout=60)
                 if res1["hits"]["total"] == 1:
                     obj = component(cpe_id=res1["hits"]["hits"][0]["_source"]["cpe_id"],title=res1["hits"]["hits"][0]["_source"]["title"],wfs=res1["hits"]["hits"][0]["_source"]["wfs"])
                 else:
-                    res2 = self.es.search(index="cpe-names",body=query2)
+                    res2 = self.es.search(index="cpe-names",body=query2,request_timeout=60)
                     if res2["hits"]["total"] == 1:
                         obj = component(cpe_id=res2["hits"]["hits"][0]["_source"]["cpe_id"],title=res2["hits"]["hits"][0]["_source"]["title"],wfs=res2["hits"]["hits"][0]["_source"]["wfs"])
             else:
@@ -301,7 +301,7 @@ class Rpm:
 
         if USE_ELASTIC_SEARCH:
             query = {"query": {"term": {"product": self.rpm_name}}}
-            res = self.es.search(index="cpe-names",body=query,size=1000)
+            res = self.es.search(index="cpe-names",body=query,size=1000,request_timeout=60)
             list_items = []
             for item in res["hits"]["hits"]:
                 list_items.append(item["_source"]["cpe_id"])

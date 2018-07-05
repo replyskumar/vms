@@ -123,7 +123,7 @@ def autocomplete(request):
             from elasticsearch import Elasticsearch
             es = Elasticsearch(ELASTIC_SEARCH_URL)
             query = {"query" : {"match":{"title": request.GET['searchall']}}}
-            res = es.search(index="cpe-names",body=query,size=100)
+            res = es.search(index="cpe-names",body=query,size=100,request_timeout=60)
             for item in res["hits"]["hits"]:
                 response.append({"name": item["_source"]["title"],"cpe": item["_source"]["cpe_id"],"id": 0})
         else:
