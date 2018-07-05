@@ -1,21 +1,19 @@
 language: python
 env:
-- DATABASE_URL='mysql://root:@localhost:3306/vms' DOWNLOAD='False'
+- DATABASE_URL='postgres://postgres:@localhost:5432/vms' DOWNLOAD='False'
 python:
 - '3.6'
 services:
-- mysql
+- postgresql
 install:
 - pip install -q -r web/requirements.txt
 before_script:
 - cd ./web
-- mysql -u root -e 'CREATE DATABASE vms;'
+- psql -c 'create database vms;' -U postgres
 - python manage.py makemigrations --noinput
 - python manage.py migrate --noinput
 script:
 - python manage.py test
-before_deploy:
-  - cd ./web
 deploy:
   provider: heroku
   api_key:
