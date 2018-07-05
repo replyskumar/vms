@@ -1,0 +1,5 @@
+ELASTICSEARCH_URL=http://elasticsearch:9200
+DATABASE_URL=postgres://vms:vms@postgres:5432/vms
+USE_ELASTIC_SEARCH=True
+DOWNLOAD=True
+REDIS_URL=redis://redis
